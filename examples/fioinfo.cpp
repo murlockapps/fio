@@ -1,11 +1,9 @@
-// $VER: example1.cpp V1.0 (27.02.2021)
-// Copyright (C) 2021 Michael Sobol info@murlock.de
-// Insert a short description here.
+// $VER: fioinfo.cpp V1.0 (27.02.2021)
 #include <iostream>
 #include "fio.h"
 
 /* <COMPILE>
-g++ -O2 -o example1 example1.cpp
+g++ -O2 -o fioinfo fio.cpp
 </COMPILE> */
 
 /* <COMPILE_WIN>
