@@ -203,4 +203,3 @@ Compile selftest (linux) with:
 Feel free to contact me if there are any problems or further questions.
 Please send fio bug reports to info@murlock.de
 
-https://guides.github.com/features/mastering-markdown/
