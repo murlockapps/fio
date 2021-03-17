@@ -1,4 +1,4 @@
-// $VER: fio.h V1.0 (22.02.2021)
+// $VER: fio.h V1.1 (15.03.2021)
 // Copyright (C) 2021 Michael Sobol info@murlock.de - Public Domain (PD)
 //
 // Portable file functions for basic input and output (linux and windows)
@@ -13,7 +13,7 @@
 //   +single header
 //
 // passed tests:
-//  openSUSE Leap 15.2           -> 25.02.2021
+//  openSUSE Leap 15.2           -> 15.03.2021
 //  Devuan GNU/Linux 3 (beowulf) -> 25.02.2021
 //  Windows 10 Pro               -> 25.02.2021
 //
@@ -51,8 +51,8 @@
 
 // library version information
 #define FIO_VER 1
-#define FIO_REV 0
-#define FIO_VERSTR "1.0"
+#define FIO_REV 1
+#define FIO_VERSTR "1.1"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -196,9 +196,9 @@ uint32_t bswap_u32(uint32_t v);
 int64_t  bswap_64(int64_t v);
 uint64_t bswap_u64(uint64_t v);
 
-uint16_t fread_u16(FILE *fp, bool bBigEndian);
-uint32_t fread_u32(FILE *fp, bool bBigEndian);
-uint64_t fread_u64(FILE *fp, bool bBigEndian);
+bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv);
+bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv);
+bool fread_u64(FILE *fp, bool bBigEndian, uint64_t &rv);
 bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v);
 bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v);
 bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v);
@@ -284,45 +284,48 @@ uint64_t bswap_u64(uint64_t v) {
 }
 
 // Read unsigned short (2 bytes) from file
-uint16_t fread_u16(FILE *fp, bool bBigEndian) {
-  uint16_t rc=0;
+bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv) {
   if (fp) {
-    if (1 != fread(&rc, sizeof(uint16_t), 1, fp)) {
-      rc=0;
+    uint16_t v=0;
+    if (1 != fread(&v, sizeof(uint16_t), 1, fp)) {
+      return false;
     }
     if (isBigEndian()!=bBigEndian) {
-      rc = bswap_u16(rc);
+      v = bswap_u16(v);
     }
+    rv=v;
   }
-  return rc;
+  return true;
 }
 
 // Read unsigned int (4 bytes) from file
-uint32_t fread_u32(FILE *fp, bool bBigEndian) {
-  uint32_t rc=0;
+bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv) {
   if (fp) {
-    if (1 != fread(&rc, sizeof(uint32_t), 1, fp)) {
-      rc=0;
+    uint32_t v=0;
+    if (1 != fread(&v, sizeof(uint32_t), 1, fp)) {
+      return false;
     }
     if (isBigEndian()!=bBigEndian) {
-      rc = bswap_u16(rc);
+      v = bswap_u32(v);
     }
+    rv=v;
   }
-  return rc;
+  return true;
 }
 
 // Read uint64_t (8 bytes) from file
-uint64_t fread_u64(FILE *fp, bool bBigEndian) {
-  uint64_t rc=0;
+bool fread_u64(FILE *fp, bool bBigEndian, uint64_t &rv) {
   if (fp) {
-    if (1 != fread(&rc, sizeof(uint64_t), 1, fp)) {
-      rc=0;
+    uint64_t v=0;
+    if (1 != fread(&v, sizeof(uint64_t), 1, fp)) {
+      return false;
     }
     if (isBigEndian()!=bBigEndian) {
-      rc = bswap_u64(rc);
+      v = bswap_u64(v);
     }
+    rv=v;
   }
-  return rc;
+  return true;
 }
 
 // Write unsigned short (2 bytes) to file
@@ -576,14 +579,14 @@ bool fioSelftest() {
       fprintf(stderr, " Error: FIO_VER is not %d\n", exp_val);
       isOk=false;
     }
-    exp_val=0;
+    exp_val=1;
     if (FIO_REV!=exp_val) {
       fioPerr();
       fprintf(stderr, " Error: FIO_REV is not %d\n", exp_val);
       isOk=false;
     }
     const size_t SS=4;
-    const char se[SS]="1.0"; // expected value
+    const char se[SS]="1.1"; // expected value
     const char sv[SS]=FIO_VERSTR; // real value
     for (size_t i=0; i<SS; i++) {
       if (sv[i]!=se[i]) {
@@ -852,20 +855,34 @@ bool fioSelftest() {
         fprintf(stderr, " Error: fileOpen(\"%s\") reopen for read failed\n", fname);
         isOk=false;
       }
-      uint16_t val=fread_u16(fp, ENDIAN_LITTLE);
-      if (val!=u16_val) {
+      uint16_t val=0;
+      if (!fread_u16(fp, ENDIAN_LITTLE, val)) {
         fioPerr();
         fprintf(stderr, " Error: fread_u16 ENDIAN_LITTLE failed\n");
         isOk=false;
       }
-      val=fread_u16(fp, ENDIAN_LITTLE);
-      if (bswap_u16(val)!=u16_val) {
+      if (val!=u16_val) {
+        fioPerr();
+        fprintf(stderr, " Error: fread_u16 ENDIAN_LITTLE wrong value\n");
+        isOk=false;
+      }
+      if (!fread_u16(fp, ENDIAN_LITTLE, val)) {
         fioPerr();
         fprintf(stderr, " Error: fread_u16 next ENDIAN_LITTLE failed\n");
         isOk=false;
       }
+      if (bswap_u16(val)!=u16_val) {
+        fioPerr();
+        fprintf(stderr, " Error: fread_u16 next ENDIAN_LITTLE wrong value\n");
+        isOk=false;
+      }
       rewind(fp);
-      uint32_t val2=fread_u32(fp, ENDIAN_LITTLE);
+      uint32_t val2=0;
+      if (!fread_u32(fp, ENDIAN_LITTLE, val2)){
+        fioPerr();
+        fprintf(stderr, " Error: fread_u32 ENDIAN_LITTLE failed\n");
+        isOk=false;
+      }
       if (val2!=0x30202030) {
         fioPerr();
         fprintf(stderr, " Error: fread_u32 ENDIAN_LITTLE is wrong\n");
@@ -905,14 +922,23 @@ bool fioSelftest() {
       }
       fp=fileOpen(fname, "rb");
       if (fp) {
-        uint64_t val3=fread_u64(fp, ENDIAN_LITTLE);
+        uint64_t val3=0;
+        if (!fread_u64(fp, ENDIAN_LITTLE, val3)) {
+          fioPerr();
+          fprintf(stderr, " Error: fread_u64 ENDIAN_LITTLE is wrong\n");
+          isOk=false;
+        }
         if (val3!=0x0706050403020100) {
           fioPerr();
           fprintf(stderr, " Error: fread_u64 ENDIAN_LITTLE is wrong\n");
           isOk=false;
         }
         rewind(fp);
-        val3=fread_u64(fp, ENDIAN_BIG);
+        if (!fread_u64(fp, ENDIAN_BIG, val3)) {
+          fioPerr();
+          fprintf(stderr, " Error: fread_u64 ENDIAN_BIG is wrong\n");
+          isOk=false;
+        }
         if (val3!=0x0001020304050607) {
           fioPerr();
           fprintf(stderr, " Error: fread_u64 ENDIAN_BIG is wrong\n");
