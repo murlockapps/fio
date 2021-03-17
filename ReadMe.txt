@@ -1,7 +1,7 @@
 ReadMe fio - portable file input output library
 -----------------------------------------------
 Overview:
- fio.h V1.0 (22.02.2021)
+ fio.h V1.1 (15.03.2021)
  Copyright (C) 2021 Michael Sobol info@murlock.de
  Public Domain (PD)
 
@@ -46,13 +46,19 @@ License:
  For more information, please refer to <http://unlicense.org>
 
 Passed tests:
- openSUSE Leap 15.2           -> 25.02.2021
+ openSUSE Leap 15.2           -> 15.03.2021
  Devuan GNU/Linux 3 (beowulf) -> 25.02.2021
  Windows 10 Pro               -> 25.02.2021
 
 Compatible compilers:
  g++ 8.3.0
  TDM-GCC 9.2.0
+
+Version history:
+ V1.1 (15.03.2021):
+  The functions fread_u16, fread_u32 and fread_u64 have been changed.
+  They return true on success and false on fail now.
+  The documentation was revised.
 
 -------------
 Short Manual:
@@ -74,10 +80,10 @@ Functional unifications:
  fseeko64, fopen64, fstat64, ftello64 -> functions for large files
 
 Functions:
- strSize -> Returns string length in bytes
+ strSize : Returns string length in bytes
   size_t strSize(const char *s);
 
- isBigEndian -> Returns true on big endian systems otherwise false
+ isBigEndian : Returns true on big endian systems otherwise false
   bool isBigEndian(void);
 
  bswap_16 : swap endianess for 16 bit signed integer
@@ -99,13 +105,16 @@ Functions:
   uint64_t bswap_u64(uint64_t v);
 
  fread_u16 : read unsigned 16 bit integer from given file fp in required endianess
-  uint16_t fread_u16(FILE *fp, bool bBigEndian);
+   The result value is written to rc. Returns true on success otherwise fail.
+  bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv);
 
  fread_u32 : read unsigned 32 bit integer from given file fp in required endianess
-  uint32_t fread_u32(FILE *fp, bool bBigEndian);
+   The result value is written to rc. Returns true on success otherwise fail.
+  bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv);
 
  fread_u64 : read unsigned 64 bit integer from given file fp in required endianess
-  uint64_t fread_u64(FILE *fp, bool bBigEndian);
+   The result value is written to rc. Returns true on success otherwise fail.
+  bool fread_u64(FILE *fp, bool bBigEndian, uint32_t &rv);
 
  fwrite_u16 : write unsigned 16 bit integer into given file fp in required endianess
   bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v);
@@ -117,12 +126,12 @@ Functions:
   bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v);
 
  fileLoadBytes : load len bytes from given file fp and return result vector
- If len is zero, then the whole file is loaded up to the end of the file.
+   If len is zero, then the whole file is loaded up to the end of the file.
   std::vector<uint8_t> fileLoadBytes(FILE *fp, int64_t len=0);
 
  fileSaveBytes : save len bytes from given vector v into file fp
- If len is zero, then write the whole vector into the file fp.
- Returns true if successfull, otherwise false.
+   If len is zero, then write the whole vector into the file fp.
+   Returns true if successfull, otherwise false.
   bool fileSaveBytes(FILE *fp, std::vector<uint8_t> &v, int64_t len=0);
 
  fileOpen : open file fullpath in given access mode
@@ -149,7 +158,7 @@ Functions:
  fileModificationTime -> return file modification time from file fullpath
   time_t fileModificationTime(const char *fullpath);
 
- fileDelete -> delete given file fullpath (unlink)
+ fileDelete : delete given file fullpath (unlink)
   bool fileDelete(const char *fullpath);
 
 ---------
