@@ -1,6 +1,6 @@
 # About
 
-fio.h V1.0 (22.02.2021) Public Domain (PD)
+fio.h V1.1 (15.03.2021) Public Domain (PD)
 
 fio is a small library for very basic file functions.
 It comes as an STB-style single-file library, with no external dependencies.
