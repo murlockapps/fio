@@ -1,7 +1,7 @@
 ReadMe fio - portable file input output library
 -----------------------------------------------
 Overview:
- fio.h V1.1 (15.03.2021)
+ fio.h V1.2 (15.03.2021)
  Copyright (C) 2021 Michael Sobol info@murlock.de
  Public Domain (PD)
 
