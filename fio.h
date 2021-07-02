@@ -1,4 +1,4 @@
-// $VER: fio.h V1.1 (15.03.2021)
+// $VER: fio.h V1.2 (29.06.2021)
 // Copyright (C) 2021 Michael Sobol info@murlock.de - Public Domain (PD)
 //
 // Portable file functions for basic input and output (linux and windows)
@@ -13,9 +13,9 @@
 //   +single header
 //
 // passed tests:
-//  openSUSE Leap 15.2           -> 15.03.2021
-//  Devuan GNU/Linux 3 (beowulf) -> 25.02.2021
-//  Windows 10 Pro               -> 25.02.2021
+//  openSUSE Leap 15.2           -> 29.06.2021
+//  Devuan GNU/Linux 3 (beowulf) -> 29.06.2021
+//  Windows 10 Pro               -> 29.06.2021
 //
 // license:
 //  The fio software is Public Domain (PD).
@@ -51,8 +51,8 @@
 
 // library version information
 #define FIO_VER 1
-#define FIO_REV 1
-#define FIO_VERSTR "1.1"
+#define FIO_REV 2
+#define FIO_VERSTR "1.2"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,10 +95,14 @@ typedef struct stat64 ststat64;
 
 #include <tchar.h>
 
+#ifdef WINVER
+#undef WINVER
+#endif
+#define WINVER 0x0601
+
 #ifdef _WIN32_WINNT
 #undef _WIN32_WINNT
 #endif
-#define WINVER 0x0601
 #define _WIN32_WINNT 0x0601
 
 #include <windows.h>
@@ -579,14 +583,14 @@ bool fioSelftest() {
       fprintf(stderr, " Error: FIO_VER is not %d\n", exp_val);
       isOk=false;
     }
-    exp_val=1;
+    exp_val=2;
     if (FIO_REV!=exp_val) {
       fioPerr();
       fprintf(stderr, " Error: FIO_REV is not %d\n", exp_val);
       isOk=false;
     }
     const size_t SS=4;
-    const char se[SS]="1.1"; // expected value
+    const char se[SS]="1.2"; // expected value
     const char sv[SS]=FIO_VERSTR; // real value
     for (size_t i=0; i<SS; i++) {
       if (sv[i]!=se[i]) {
