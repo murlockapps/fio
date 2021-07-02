@@ -1,7 +1,7 @@
 ReadMe fio - portable file input output library
 -----------------------------------------------
 Overview:
- fio.h V1.2 (15.03.2021)
+ fio.h V1.2 (29.06.2021)
  Copyright (C) 2021 Michael Sobol info@murlock.de
  Public Domain (PD)
 
@@ -46,15 +46,19 @@ License:
  For more information, please refer to <http://unlicense.org>
 
 Passed tests:
- openSUSE Leap 15.2           -> 15.03.2021
- Devuan GNU/Linux 3 (beowulf) -> 25.02.2021
- Windows 10 Pro               -> 25.02.2021
+ openSUSE Leap 15.2           -> 29.06.2021
+ Devuan GNU/Linux 3 (beowulf) -> 29.06.2021
+ Windows 10 Pro               -> 29.06.2021
 
 Compatible compilers:
  g++ 8.3.0
  TDM-GCC 9.2.0
+ TDM-GCC 10.3.0
 
 Version history:
+ V1.2 (29.06.2021):
+  Compiler bugfix for windows
+  WINVER undef
  V1.1 (15.03.2021):
   The functions fread_u16, fread_u32 and fread_u64 have been changed.
   They return true on success and false on fail now.
