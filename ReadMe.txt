@@ -1,8 +1,8 @@
 ReadMe fio - portable file input output library
 -----------------------------------------------
 Overview:
- fio.h V1.2 (29.06.2021)
- Copyright (C) 2021 Michael Sobol info@murlock.de
+ fio.h V1.3 (22.05.2023)
+ Copyright (C) 2023 Michael Sobol info@murlock.de
  Public Domain (PD)
 
  Portable file functions for basic input and output (linux and windows)
@@ -46,9 +46,10 @@ License:
  For more information, please refer to <http://unlicense.org>
 
 Passed tests:
- openSUSE Leap 15.2           -> 29.06.2021
- Devuan GNU/Linux 3 (beowulf) -> 29.06.2021
- Windows 10 Pro               -> 29.06.2021
+ openSUSE Leap 15.4           -> 22.05.2023
+ Devuan GNU/Linux 3 (beowulf) -> 22.05.2023
+ Windows 10 Pro               -> 22.05.2023
+ Windows 11 Pro               -> 22.05.2023
 
 Compatible compilers:
  g++ 8.3.0
@@ -56,6 +57,9 @@ Compatible compilers:
  TDM-GCC 10.3.0
 
 Version history:
+ V1.3 (22.05.2023):
+  New functions fread_u8 and fwrite_u8.
+  Changed behaviour if file pointer is invalid.
  V1.2 (29.06.2021):
   Compiler bugfix for windows
   WINVER undef
@@ -108,6 +112,10 @@ Functions:
  bswap_64 : swap endianess for 64 bit unsigned integer
   uint64_t bswap_u64(uint64_t v);
 
+ fread_u8 : read single byte from given file fp
+   The result value is written to rc.
+  bool fread_u8(FILE *fp, uint8_t &rv);
+
  fread_u16 : read unsigned 16 bit integer from given file fp in required endianess
    The result value is written to rc. Returns true on success otherwise fail.
   bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv);
@@ -122,6 +130,9 @@ Functions:
 
  fwrite_u16 : write unsigned 16 bit integer into given file fp in required endianess
   bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v);
+
+ fwrite_u16 : write single byte into given file fp
+  bool fwrite_u8(FILE *fp, uint8_t v);
 
  fwrite_u32 : write unsigned 32 bit integer into given file fp in required endianess
   bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v);
