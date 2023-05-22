@@ -1,5 +1,5 @@
-// $VER: fio.h V1.2 (29.06.2021)
-// Copyright (C) 2021 Michael Sobol info@murlock.de - Public Domain (PD)
+// $VER: fio.h V1.3 (22.05.2023)
+// Copyright (C) 2023 Michael Sobol info@murlock.de - Public Domain (PD)
 //
 // Portable file functions for basic input and output (linux and windows)
 //
@@ -10,12 +10,18 @@
 //   +fseeko64 ftello64 fopen64 fstat64 stat64 ststat64 on all systems
 //   +system specific abstractions PATH_SEPARATOR EOL
 //   +byteorder specific read and write functions
-//   +single header
+//   +single header library
 //
 // passed tests:
-//  openSUSE Leap 15.2           -> 29.06.2021
-//  Devuan GNU/Linux 3 (beowulf) -> 29.06.2021
-//  Windows 10 Pro               -> 29.06.2021
+//  openSUSE Leap 15.2           -> 22.05.2023
+//  Devuan GNU/Linux 3 (beowulf) -> 22.05.2023
+//  Windows 10 Pro               -> 22.05.2023
+//  Windows 11 Pro               -> 22.05.2023
+//
+// history:
+//   v1.3 (22.05.2023): fread_u8 fwrite_u8
+//   v1.2 (29.06.2021): compiler bugfix for windows
+//   v1.1 (15.03.2021): fread_u16 fread_u32 fread_u64
 //
 // license:
 //  The fio software is Public Domain (PD).
@@ -51,8 +57,8 @@
 
 // library version information
 #define FIO_VER 1
-#define FIO_REV 2
-#define FIO_VERSTR "1.2"
+#define FIO_REV 3
+#define FIO_VERSTR "1.3"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,8 +66,6 @@
 #include <time.h>
 #include <vector>
 #include <inttypes.h> // for selftest
-// #include <algorithm>
-// #include <string>
 
 #ifdef __linux__
 // ***************
@@ -193,6 +197,7 @@ static std::wstring utf8_to_wstring(const std::string &str) {
 
 size_t strSize(const char *s);
 bool isBigEndian(void);
+
 int16_t  bswap_16(int16_t v);
 uint16_t bswap_u16(uint16_t v);
 int32_t  bswap_32(int32_t v);
@@ -200,12 +205,15 @@ uint32_t bswap_u32(uint32_t v);
 int64_t  bswap_64(int64_t v);
 uint64_t bswap_u64(uint64_t v);
 
+bool fread_u8(FILE *fp, uint8_t &rv);
 bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv);
 bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv);
 bool fread_u64(FILE *fp, bool bBigEndian, uint64_t &rv);
+bool fwrite_u8(FILE *fp, uint8_t v);
 bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v);
 bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v);
 bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v);
+
 std::vector<uint8_t> fileLoadBytes(FILE *fp, int64_t len=0);
 bool fileSaveBytes(FILE *fp, std::vector<uint8_t> &v, int64_t len=0);
 
@@ -225,14 +233,14 @@ bool fileDelete(const char *fullpath);
 
 // Returns string size in bytes
 size_t strSize(const char *s) {
-  size_t ret=0;
+  size_t ret = 0;
   if (s) {
-    size_t n=0;
+    size_t n = 0;
     while(true) {
-      if (s[n]=='\0') break;
+      if (s[n] == '\0') break;
       n++;
     }
-    ret=n;
+    ret = n;
   }
   return ret;
 }
@@ -271,11 +279,7 @@ uint32_t bswap_u32(uint32_t v) {
 
 // Swap little endian/big endian (int64_t)
 int64_t bswap_64(int64_t v) {
-  v = ((v<<8) & 0xFF00FF00FF00FF00ULL)
-    | ((v>>8) & 0x00FF00FF00FF00FFULL);
-  v = ((v<<16) & 0xFFFF0000FFFF0000ULL)
-    | ((v>>16) & 0x0000FFFF0000FFFFULL);
-  return ((v<<32) | (v>>32));
+  return (int64_t)bswap_u32((uint64_t)(v));
 }
 
 // Swap little endian/big endian (uint64_t)
@@ -287,115 +291,142 @@ uint64_t bswap_u64(uint64_t v) {
   return ((v<<32) | ((v>>32) & 0xFFFFFFFFULL));
 }
 
+// Read single byte from file
+bool fread_u8(FILE *fp, uint8_t &rv) {
+ if (!fp) return false;
+
+  uint16_t v = 0;
+  if (1 != fread(&v, sizeof(uint8_t), 1, fp)) {
+    return false;
+  }
+  rv=v;
+
+  return true;
+}
+
 // Read unsigned short (2 bytes) from file
 bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv) {
-  if (fp) {
-    uint16_t v=0;
-    if (1 != fread(&v, sizeof(uint16_t), 1, fp)) {
-      return false;
-    }
-    if (isBigEndian()!=bBigEndian) {
-      v = bswap_u16(v);
-    }
-    rv=v;
+  if (!fp) return false;
+
+  uint16_t v = 0;
+  if (1 != fread(&v, sizeof(uint16_t), 1, fp)) {
+    return false;
   }
+  if (isBigEndian() != bBigEndian) {
+    v = bswap_u16(v);
+  }
+  rv=v;
+
   return true;
 }
 
 // Read unsigned int (4 bytes) from file
 bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv) {
-  if (fp) {
-    uint32_t v=0;
-    if (1 != fread(&v, sizeof(uint32_t), 1, fp)) {
-      return false;
-    }
-    if (isBigEndian()!=bBigEndian) {
-      v = bswap_u32(v);
-    }
-    rv=v;
+  if (!fp) return false;
+
+  uint32_t v = 0;
+  if (1 != fread(&v, sizeof(uint32_t), 1, fp)) {
+    return false;
   }
+  if (isBigEndian() != bBigEndian) {
+    v = bswap_u32(v);
+  }
+  rv=v;
+
   return true;
 }
 
 // Read uint64_t (8 bytes) from file
 bool fread_u64(FILE *fp, bool bBigEndian, uint64_t &rv) {
-  if (fp) {
-    uint64_t v=0;
-    if (1 != fread(&v, sizeof(uint64_t), 1, fp)) {
-      return false;
-    }
-    if (isBigEndian()!=bBigEndian) {
-      v = bswap_u64(v);
-    }
-    rv=v;
+  if (!fp) return false;
+
+  uint64_t v=0;
+  if (1 != fread(&v, sizeof(uint64_t), 1, fp)) {
+    return false;
   }
+  if (isBigEndian() != bBigEndian) {
+    v = bswap_u64(v);
+  }
+  rv=v;
+
+  return true;
+}
+
+// Write single byte to file
+bool fwrite_u8(FILE *fp, uint8_t v) {
+  if (!fp) return false;
+
+  if (1 != fwrite(&v, sizeof(uint8_t), 1, fp)) {
+    return false;
+  }
+
   return true;
 }
 
 // Write unsigned short (2 bytes) to file
 bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v) {
-  bool ret=false;
-  if (fp) {
-     if (isBigEndian()!=bBigEndian) {
-       v = bswap_u16(v);
-     }
-     if (1 == fwrite(&v, sizeof(uint16_t), 1, fp)) {
-       ret=true;
-     }
+  if (!fp) return false;
+
+  if (isBigEndian() != bBigEndian) {
+    v = bswap_u16(v);
   }
-  return ret;
+  if (1 != fwrite(&v, sizeof(uint16_t), 1, fp)) {
+    return false;
+  }
+
+  return true;
 }
 
 // Write unsigned int (4 bytes) to file
 bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v) {
-  bool ret=false;
-  if (fp) {
-     if (isBigEndian()!=bBigEndian) {
-       v = bswap_u32(v);
-     }
-     if (1 == fwrite(&v, sizeof(uint32_t), 1, fp)) {
-       ret=true;
-     }
+  if (!fp) return false;
+
+  if (isBigEndian() != bBigEndian) {
+    v = bswap_u32(v);
   }
-  return ret;
+  if (1 != fwrite(&v, sizeof(uint32_t), 1, fp)) {
+    return false;
+  }
+
+  return true;
 }
 
 // Write uint64_t (8 bytes) to file
 bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v) {
-  bool ret=false;
-  if (fp) {
-     if (isBigEndian()!=bBigEndian) {
-       v = bswap_u64(v);
-     }
-     if (1 == fwrite(&v, sizeof(uint64_t), 1, fp)) {
-       ret=true;
-     }
+  if (!fp) return false;
+
+  if (isBigEndian() != bBigEndian) {
+    v = bswap_u64(v);
   }
-  return ret;
+  if (1 != fwrite(&v, sizeof(uint64_t), 1, fp)) {
+    return false;
+  }
+
+  return true;
 }
 
 // Loads len bytes into an vector of bytes.
 // If len is zero, then the whole file is loaded up to the end of the file.
 std::vector<uint8_t> fileLoadBytes(FILE *fp, int64_t len /* =0 */) {
   std::vector<uint8_t> v;
-  if (len==0) {
+  if (len == 0) {
     len = fileSize(fp);
   }
   const int64_t n = len;
   uint8_t buf[FILEIOBUFSIZE];
-  while(len>0 && !feof(fp)) {
+  while(len > 0 && !feof(fp)) {
     size_t bytes = 0;
-    if (len>=FILEIOBUFSIZE) {
+    if (len >= FILEIOBUFSIZE) {
       bytes = fread(buf, 1, FILEIOBUFSIZE, fp);
     } else {
       bytes = fread(buf, 1, len, fp);
     }
-    for (size_t i=0; i<bytes; i++) {
+    for (size_t i = 0; i < bytes; i++) {
       v.push_back(buf[i]);
     }
-    bytes>0 ? len-=bytes : len=0;
+    bytes > 0 ? len -= bytes : len=0;
   }
-  if (v.size()!=(size_t)n) {
+  if (v.size() != (size_t)n) {
     v.clear();
   }
   return v;
@@ -405,29 +436,29 @@ std::vector<uint8_t> fileLoadBytes(FILE *fp, int64_t len /* =0 */) {
 // If len is zero, then write the whole vector into the file fp.
 // Returns true if successfull, otherwise false.
 bool fileSaveBytes(FILE *fp, std::vector<uint8_t> &v, int64_t len /* =0 */) {
-  if (len==0 || (size_t)len>v.size()) {
-    len=v.size();
+  if (len == 0 || (size_t)len > v.size()) {
+    len = v.size();
   }
   uint8_t buf[FILEIOBUFSIZE];
   size_t n = 0;
-  while(len>0 && !feof(fp)) {
+  while(len > 0 && !feof(fp)) {
     size_t wbytes = 0; // current bytes in buffer
-    size_t bytes = 0;  // successfully written bytes
-    if (len>=FILEIOBUFSIZE) {
+    size_t bytes  = 0;  // successfully written bytes
+    if (len >= FILEIOBUFSIZE) {
       wbytes = FILEIOBUFSIZE;
     } else {
       wbytes = len;
     }
     // copy to buf
-    for (size_t i=0; i<wbytes; i++) {
-      buf[i]=v[n++];
+    for (size_t i = 0; i < wbytes; i++) {
+      buf[i] = v[n++];
     }
     // write buf
     bytes = fwrite(buf, 1, wbytes, fp);
-    if (bytes!=wbytes) {
+    if (bytes != wbytes) {
       return false;
     }
-    len-=bytes;
+    len -= bytes;
   }
   return true;
 }
@@ -444,18 +475,18 @@ FILE* fileOpen(const char *fullpath, const char *mode) {
 
 // Closes a file
 int fileClose(FILE *fp) {
-  int ret=0;
-  if (fp==0){
-    ret=EOF;
+  int ret = 0;
+  if (fp == 0){
+    ret = EOF;
   } else {
-    ret=fclose(fp);
+    ret = fclose(fp);
   }
   return ret;
 }
 
 // Returns the size of a given file in bytes or -1 on errors.
 int64_t fileSize(const char *fullpath) {
-  if (strSize(fullpath)==0) return -1;
+  if (strSize(fullpath) == 0) return -1;
   ststat64 st_buf;
 #ifdef __linux__
   size_t rc = stat64(fullpath, &st_buf);
@@ -474,7 +505,7 @@ int64_t fileSize(FILE *fp) {
 
 // Returns true if file or directory is readable
 bool fileReadable(const char *fullpath) {
-  if (strSize(fullpath)==0) return false;
+  if (strSize(fullpath) == 0) return false;
 #ifdef __linux__
   if (access(fullpath, R_OK) != 0) return false;
 #elif defined(_WIN32) || defined(WIN32)
@@ -486,7 +517,7 @@ bool fileReadable(const char *fullpath) {
 // Returns true if file exits, otherwise false
 bool fileExists(const char *fullpath) {
   bool ret=false;
-  if (strSize(fullpath)>0) {
+  if (strSize(fullpath) > 0) {
     ststat64 st_buf;
     int rc;
 #ifdef __linux__
@@ -496,7 +527,7 @@ bool fileExists(const char *fullpath) {
 #else
     rc = -1;
 #endif
-    ret = (rc==0);
+    ret = (rc == 0);
   }
   return ret;
 }
@@ -504,29 +535,28 @@ bool fileExists(const char *fullpath) {
 // Returns the type of a file
 // (-1=error, 0=file, 1=directory, 2=symlink)
 int fileType(const char *fullpath) {
-  if (strSize(fullpath)==0) return -1;
+  if (strSize(fullpath) == 0) return -1;
   ststat64 st_buf;
 #ifdef __linux__
   int rc = stat64(fullpath, &st_buf);
 #elif defined(_WIN32) || defined(WIN32)
   int rc = stat64(utf8_to_wstring(fullpath).c_str(), &st_buf);
 #endif
-
   if (rc == 0) {
     if (S_ISREG(st_buf.st_mode)) {
-      rc=0; // regular file
+      rc = 0; // regular file
     } else if (S_ISDIR(st_buf.st_mode)) {
-      rc=1; // directory
+      rc = 1; // directory
     } else {
 #ifdef __linux__
       if (S_ISLNK(st_buf.st_mode)) {
-        rc=2; // symbolic link
+        rc = 2; // symbolic link
       }
 #endif
       // S_ISLNK is not defined in windows!
     }
   } else {
-    rc=-1;
+    rc = -1;
   }
   return rc;
 }
@@ -534,7 +564,7 @@ int fileType(const char *fullpath) {
 // Returns the modification time of a file
 time_t fileModificationTime(const char *fullpath) {
   time_t ret=0;
-  if (strSize(fullpath)==0) return ret;
+  if (strSize(fullpath) == 0) return ret;
   ststat64 st_buf;
 #ifdef __linux__
   int rc = stat64(fullpath, &st_buf);
@@ -550,7 +580,7 @@ time_t fileModificationTime(const char *fullpath) {
 // Deletes a file
 bool fileDelete(const char *fullpath) {
   bool ret=false;
-  if (strSize(fullpath)==0) return ret;
+  if (strSize(fullpath) == 0) return ret;
 #ifdef __linux__
   ret=(unlink(fullpath) != -1);
 #elif defined(_WIN32) || defined(WIN32)
@@ -583,14 +613,14 @@ bool fioSelftest() {
       fprintf(stderr, " Error: FIO_VER is not %d\n", exp_val);
       isOk=false;
     }
-    exp_val=2;
+    exp_val=3;
     if (FIO_REV!=exp_val) {
       fioPerr();
       fprintf(stderr, " Error: FIO_REV is not %d\n", exp_val);
       isOk=false;
     }
     const size_t SS=4;
-    const char se[SS]="1.2"; // expected value
+    const char se[SS]="1.3"; // expected value
     const char sv[SS]=FIO_VERSTR; // real value
     for (size_t i=0; i<SS; i++) {
       if (sv[i]!=se[i]) {
