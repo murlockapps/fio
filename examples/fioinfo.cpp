@@ -1,4 +1,4 @@
-// $VER: fioinfo.cpp V1.0 (27.02.2021)
+// $VER: fioinfo.cpp V1.1 (04.09.2026)
 
 /* <COMPILE>
 g++ -O2 -o fioinfo fioinfo.cpp
@@ -20,8 +20,8 @@ int main(int argc, char **argv) {
   }
   std::cout << "computer" << std::endl;
 
-  std::cout << "2. The PATH_SEPARATOR string sequence is ";
-  std::cout << " '" << PATH_SEPARATOR << "'" << std::endl;
+  std::cout << "2. The path separator string sequence is ";
+  std::cout << " '" << FIO_PATH_SEPARATOR << "'" << std::endl;
   return 0;
 }
 // EOF
