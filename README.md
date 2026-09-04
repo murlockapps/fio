@@ -1,20 +1,20 @@
 # About
 
-fio.h V1.3 (22.05.2023) Public Domain (PD)
+fio.h V1.6 (03.09.2026) Public Domain (PD)
 
-fio is a small library for very basic file functions.
-It comes as an STB-style single-file library, with no external dependencies.
+Portable file functions for basic input and output (Linux and Windows)
+fio is a small library for basic file operations.
+It comes as an STB-style single-file library with no external dependencies.
 
 ## Features
-* support for large files (64bit)
-* all strings can contain utf8 encoding
-* same functions on all platforms (therefore also same code)
-* fseeko64 ftello64 fopen64 fstat64 stat64 ststat64 on all systems
-* system specific abstractions for PATH_SEPARATOR and EOL
-* byteorder specific read and write functions
-* single header library (no extra compiling is necessary)
-* standalone, no extra libraries needed
-
+* Support for large files (64bit)
+* All strings support UTF-8 encoding
+* Same API on all platforms (therefore also same code)
+* System-specific abstractions for path separator and EOL
+* Byte-order-specific read and write functions
+* Single-header library (no extra compitaion is necessary)
+* Standalone, no extra libraries needed
+  
 ## Examples
 
 ### Some system information
@@ -30,8 +30,8 @@ int main(int argc, char **argv) {
    }
    std::cout << "computer" << std::endl;
 
-   std::cout << "2. The PATH_SEPARATOR string sequence is ";
-   std::cout << " '" << PATH_SEPARATOR << "'" << std::endl;
+   std::cout << "2. The path separator string sequence is ";
+   std::cout << " '" << FIO_PATH_SEPARATOR << "'" << std::endl;
    return 0;
 }
 ```
@@ -47,31 +47,13 @@ int main(int argc, char **argv) {
     for (size_t i=0; cstr[i]!='\0'; i++) {
       v.push_back(cstr[i]);
     }
-    fileSaveBytes(fp, v, v.size());
+    fwrite_bytes(fp, v, v.size());
     fileClose(fp);
   }
   return 0;
 }
 ```
 
-### Run selftest
-```c++
-#include "fio.h"
-int main(int argc, char **argv) {
-  bool isOk = fioSelftest();
-  if (isOk) {
-    fioPerr(1);
-  }
-  return 0;
-}
-```
-
-#### Compile selftest (linux) with:
-```bash
-g++ -Wall -pedantic -Os -s -o selftest selftest.cpp -DSELFTEST
-```
-
-
 ## Contact
 Feel free to contact me if there are any problems or further questions.  
-Please send fio bug reports to info@murlock.de
+Please send fio bug reports to 'info@murlock.de'
