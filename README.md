@@ -40,11 +40,11 @@ int main(int argc, char **argv) {
 ```c++
 #include "fio.h"
 int main(int argc, char **argv) {
-  FILE *fp=fileOpen("/tmp/hw.txt", "wb");
+  FILE *fp = fileOpen("fiohello.txt", "wb");
   if (fp) {
     std::vector<uint8_t> v;
-    const char *cstr="Hello World!\n";
-    for (size_t i=0; cstr[i]!='\0'; i++) {
+    const char *cstr = "Hello World!\n";
+    for (size_t i = 0; cstr[i] != '\0'; i++) {
       v.push_back(cstr[i]);
     }
     fwrite_bytes(fp, v, v.size());
