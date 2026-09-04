@@ -19,8 +19,8 @@ It comes as an STB-style single-file library with no external dependencies.
 
 ### Some system information
 ```c++
-#include "fio.h"
 #include <iostream>
+#include "fio.h"
 int main(int argc, char **argv) {
   std::cout << "1. Your system is a ";
   if (isBigEndian()) {
