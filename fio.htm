@@ -1,0 +1,314 @@
+<html>
+<head>
+<title>fio.h</title>
+<style>
+body { background-color: white; padding: 10px 20px; font: 14px Arial, sans-serif; }
+h1 {  margin-bottom: 8px; }
+h2 {  margin-bottom: 8px; }
+h3 {
+  margin-left: -10px;
+  margin-top: 0px;
+  margin-bottom: 4px;
+}
+par { margin: 10px 10px 20px 10px; padding: 0; }
+p { margin: 0px 10px; padding: 0; }
+a { padding-left: 0px; text-decoration: none; }
+tt { color: #111; }
+ul { margin-top: 0px; padding-top: 0px; }
+table { border-collapse: collapse; margin: 5px 80px 20px 30px; }
+th { border: 1px solid black; text-align: left; background-color: #eee }
+table, th, td { border: 1px solid black; text-align: left; vertical-align: top; padding: 3px 5px; }
+#blockFunc {
+  background-color: #eef;
+  border:1px solid black;
+  padding: 10px 20px;
+  margin: 5px 80px 10px 30px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+#blockClass {
+  background-color: #eee;
+  border:1px solid black;
+  padding: 10px 20px;
+  margin: 5px 80px 10px 30px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+#blockMethod {
+  background-color: #ddd;
+  border:1px solid black;
+  padding: 10px 20px;
+  margin: 5px 20px 10px 20px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+#blockCtor {
+  background-color: #ded;
+  border:1px solid black;
+  padding: 10px 20px;
+  margin: 5px 20px 10px 20px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+#blockDtor {
+  background-color: #edd;
+  border:1px solid black;
+  padding: 10px 20px;
+  margin: 5px 20px 10px 20px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+#addr {
+  text-align: right;
+  float: right;
+}
+#dist {
+  float: left;
+  text-align: right;
+  padding-right: 10px;
+  width: 120px;
+}
+#line { padding: 8px 8px; }
+#wrapper {
+  column-count: 4;
+}
+</style>
+</head>
+<body>
+<h1 id='Top'>fio.h</h1>
+<p align='justify'>A portable file I/O library for Linux and Windows.</p>
+<hr>
+<p>Copyright (C) Michael Sobol</p><br>
+<p><div id='dist'>Version:</div>1.6</p>
+<p><div id='dist'>Date:</div>03.09.2026</p>
+<p><div id='dist'>Author:</div>Michael Sobol</p>
+<p><div id='dist'>Email:</div>info@murlock.de</p>
+<hr>
+<h2 id='Contents'>Contents</h2>
+<ul>
+<li><a href='#Index'>Index</a></li>
+<li><a href='#Definitions'>Definitions</a></li>
+<li><a href='#Functions'>Functions</a></li>
+<li><a href='#License'>License</a></li>
+</ul>
+<hr>
+<h2 id='Index'>Index</h2>
+<div id='wrapper'>
+<p><a href='#bswap_16'>bswap_16</a></p>
+<p><a href='#bswap_32'>bswap_32</a></p>
+<p><a href='#bswap_64'>bswap_64</a></p>
+<p><a href='#bswap_u16'>bswap_u16</a></p>
+<p><a href='#bswap_u32'>bswap_u32</a></p>
+<p><a href='#bswap_u64'>bswap_u64</a></p>
+<p><a href='#ENDIAN_BIG'>ENDIAN_BIG</a></p>
+<p><a href='#ENDIAN_LITTLE'>ENDIAN_LITTLE</a></p>
+<p><a href='#fileClose'>fileClose</a></p>
+<p><a href='#fileCreateDirectory'>fileCreateDirectory</a></p>
+<p><a href='#fileDelete'>fileDelete</a></p>
+<p><a href='#fileExists'>fileExists</a></p>
+<p><a href='#FILEIOBUFSIZE'>FILEIOBUFSIZE</a></p>
+<p><a href='#fileModificationTime'>fileModificationTime</a></p>
+<p><a href='#fileOpen'>fileOpen</a></p>
+<p><a href='#filePosition'>filePosition</a></p>
+<p><a href='#fileReadable'>fileReadable</a></p>
+<p><a href='#fileRename'>fileRename</a></p>
+<p><a href='#fileSeek'>fileSeek</a></p>
+<p><a href='#fileSize'>fileSize</a></p>
+<p><a href='#fileSize'>fileSize</a></p>
+<p><a href='#fileType'>fileType</a></p>
+<p><a href='#FIO_EOL'>FIO_EOL</a></p>
+<p><a href='#FIO_PATH_SEPARATOR'>FIO_PATH_SEPARATOR</a></p>
+<p><a href='#FIO_REV'>FIO_REV</a></p>
+<p><a href='#FIO_VER'>FIO_VER</a></p>
+<p><a href='#FIO_VERSTR'>FIO_VERSTR</a></p>
+<p><a href='#fread_bytes'>fread_bytes</a></p>
+<p><a href='#fread_dbl'>fread_dbl</a></p>
+<p><a href='#fread_flt'>fread_flt</a></p>
+<p><a href='#fread_u16'>fread_u16</a></p>
+<p><a href='#fread_u32'>fread_u32</a></p>
+<p><a href='#fread_u64'>fread_u64</a></p>
+<p><a href='#fread_u8'>fread_u8</a></p>
+<p><a href='#fwrite_bytes'>fwrite_bytes</a></p>
+<p><a href='#fwrite_dbl'>fwrite_dbl</a></p>
+<p><a href='#fwrite_flt'>fwrite_flt</a></p>
+<p><a href='#fwrite_u16'>fwrite_u16</a></p>
+<p><a href='#fwrite_u32'>fwrite_u32</a></p>
+<p><a href='#fwrite_u64'>fwrite_u64</a></p>
+<p><a href='#fwrite_u8'>fwrite_u8</a></p>
+<p><a href='#isBigEndian'>isBigEndian</a></p>
+<p><a href='#strSize'>strSize</a></p>
+<p><a href='#ststat64'>ststat64</a></p>
+</div>
+<hr>
+<h2 id='Definitions'>Definitions</h2>
+<table>
+<tr><th>Name</th><th>Value</th><th>Description</th></tr>
+<tr><td id='FIO_VER'>FIO_VER</td><td>1</td><td>Version number</td></tr>
+<tr><td id='FIO_REV'>FIO_REV</td><td>6</td><td>Revision number</td></tr>
+<tr><td id='FIO_VERSTR'>FIO_VERSTR</td><td>1.6</td><td>Version string</td></tr>
+<tr><td id='FIO_PATH_SEPARATOR'>FIO_PATH_SEPARATOR</td><td>linux:'/' or windows:'\'</td><td>System specific path seperator</td></tr>
+<tr><td id='FIO_EOL'>FIO_EOL</td><td>linux:\n or windows:\r\n	</td><td>System specific end of line sequence</td></tr>
+<tr><td id='ststat64'>ststat64</td><td></td><td>Uniform 64 bit stat64 structure</td></tr>
+<tr><td id='ENDIAN_LITTLE'>ENDIAN_LITTLE</td><td>0</td><td>Little-endian identifier</td></tr>
+<tr><td id='ENDIAN_BIG'>ENDIAN_BIG</td><td>1</td><td>Big-endian identifier</td></tr>
+<tr><td id='FILEIOBUFSIZE'>FILEIOBUFSIZE</td><td>8192</td><td>Buffer size in bytes for catching the file input and output</td></tr>
+</table>
+<a href='#Top'>Top</a>
+<hr>
+<h2 id='Functions'>Functions</h2>
+<div id='blockFunc'>
+<h3 id='strSize' style='color: darkgreen;'>strSize</h3>
+<div id='line'><tt><b style='color: darkblue;'>size_t strSize(const char *s)</b></tt><div style='margin-top: 5px;'>Returns size in bytes from string 's'</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='isBigEndian' style='color: darkgreen;'>isBigEndian</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool isBigEndian()</b></tt><div style='margin-top: 5px;'>Returns true on big-endian systems and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='bswap_16' style='color: darkgreen;'>bswap_16</h3>
+<div id='line'><tt><b style='color: darkblue;'>int16_t bswap_16(int16_t v)</b></tt><div style='margin-top: 5px;'>Swaps the byte order between little-endian and big-endian (int16_t)</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='bswap_u16' style='color: darkgreen;'>bswap_u16</h3>
+<div id='line'><tt><b style='color: darkblue;'>uint16_t bswap_u16(uint16_t v)</b></tt><div style='margin-top: 5px;'>Swaps the byte order between little-endian and big-endian (uint16_t)</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='bswap_32' style='color: darkgreen;'>bswap_32</h3>
+<div id='line'><tt><b style='color: darkblue;'>int32_t bswap_32(int32_t v)</b></tt><div style='margin-top: 5px;'>Swaps the byte order between little-endian and big-endian (int32_t)</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='bswap_u32' style='color: darkgreen;'>bswap_u32</h3>
+<div id='line'><tt><b style='color: darkblue;'>uint32_t bswap_u32(uint32_t v)</b></tt><div style='margin-top: 5px;'>Swaps the byte order between little-endian and big-endian (uint32_t)</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='bswap_64' style='color: darkgreen;'>bswap_64</h3>
+<div id='line'><tt><b style='color: darkblue;'>int64_t bswap_64(int64_t v)</b></tt><div style='margin-top: 5px;'>Swaps the byte order between little-endian and big-endian (int64_t)</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='bswap_u64' style='color: darkgreen;'>bswap_u64</h3>
+<div id='line'><tt><b style='color: darkblue;'>uint64_t bswap_u64(uint64_t v)</b></tt><div style='margin-top: 5px;'>Swaps the byte order between little-endian and big-endian (uint64_t)</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fread_u8' style='color: darkgreen;'>fread_u8</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fread_u8(FILE *fp, uint8_t &rv)</b></tt><div style='margin-top: 5px;'> Reads a single byte from the file pointer 'fp'.<br>  Stores the byte read from the file in the variable referenced by 'rv'.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fread_u16' style='color: darkgreen;'>fread_u16</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv)</b></tt><div style='margin-top: 5px;'>Reads an unsigned short (2 bytes) from the file pointer 'fp'.<br>  Stores the value read from the file in the variable referenced by 'rv'.<br>  If 'bBigEndian' is true, the byte order is interpreted as big-endian.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fread_u32' style='color: darkgreen;'>fread_u32</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv)</b></tt><div style='margin-top: 5px;'>Reads an unsigned int (4 bytes) from the file pointer 'fp'.<br>  Stores the value read from the file in the variable referenced by 'rv'.<br>  If 'bBigEndian' is true, the byte order is interpreted as big-endian.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fread_u64' style='color: darkgreen;'>fread_u64</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fread_u64(FILE *fp, bool bBigEndian, uint64_t &rv)</b></tt><div style='margin-top: 5px;'>Reads an uint64_t (8 bytes) from the file pointer 'fp'.<br>  Stores the value read from the file in the variable referenced by 'rv'.<br>  If 'bBigEndian' is true, the byte order is interpreted as big-endian.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fread_flt' style='color: darkgreen;'>fread_flt</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fread_flt(FILE *fp, bool bBigEndian, float &rv)</b></tt><div style='margin-top: 5px;'>Reads a float value (4 bytes) from the file pointer 'fp'.<br>  Stores the value read from the file in the variable referenced by 'rv'.<br>  If 'bBigEndian' is true, the byte order is interpreted as big-endian.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fread_dbl' style='color: darkgreen;'>fread_dbl</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fread_dbl(FILE *fp, bool bBigEndian, double &rv)</b></tt><div style='margin-top: 5px;'>Reads a double value (8 bytes) from the file pointer 'fp'.<br>  Stores the value read from the file in the variable referenced by 'rv'.<br>  If 'bBigEndian' is true, the byte order is interpreted as big-endian.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fread_bytes' style='color: darkgreen;'>fread_bytes</h3>
+<div id='line'><tt><b style='color: darkblue;'>fread_bytes(FILE *fp, std::vector<uint8_t> &rv,  int64_t len = 0)</b></tt><div style='margin-top: 5px;'>Loads len bytes from the current file position into a vector of bytes.<br>  If len is zero, then all remaining bytes are loaded up to the end of the file.<br>  Returns true if all requested bytes were successfully read, otherwise false.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fwrite_u8' style='color: darkgreen;'>fwrite_u8</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fwrite_u8(FILE *fp, uint8_t v)</b></tt><div style='margin-top: 5px;'>Writes a single byte value 'v' to the file pointer 'fp'.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fwrite_u16' style='color: darkgreen;'>fwrite_u16</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v)</b></tt><div style='margin-top: 5px;'>Writes an unsigned short (2 bytes) value 'v' to file pointer 'fp'.<br>  If 'bBigEndian' is true, the value is written in big-endian byte order.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fwrite_u32' style='color: darkgreen;'>fwrite_u32</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v)</b></tt><div style='margin-top: 5px;'>Writes an unsigned int (4 bytes) value 'v' to file pointer 'fp'.  If 'bBigEndian' is true, the value is written in big-endian byte order.  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fwrite_u64' style='color: darkgreen;'>fwrite_u64</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v)</b></tt><div style='margin-top: 5px;'>Writes an uint64_t (8 bytes) value 'v' to file pointer 'fp'.<br>  If 'bBigEndian' is true, the value is written in big-endian byte order.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fwrite_flt' style='color: darkgreen;'>fwrite_flt</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fwrite_flt(FILE *fp, bool bBigEndian, float v)</b></tt><div style='margin-top: 5px;'>Writes a float (4 bytes) value 'v' to file pointer 'fp'.<br>  If 'bBigEndian' is true, the value is written in big-endian byte order.<br>  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fwrite_dbl' style='color: darkgreen;'>fwrite_dbl</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fwrite_dbl(FILE *fp, bool bBigEndian, double v)</b></tt><div style='margin-top: 5px;'>Writes a double (8 bytes) value 'v' to file pointer 'fp'.<br>  If 'bBigEndian' is true, the value is written in big-endian byte order.  Returns true on success and false otherwise.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fwrite_bytes' style='color: darkgreen;'>fwrite_bytes</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fwrite_bytes(FILE *fp, const std::vector<uint8_t> &v, int64_t len=0)</b></tt><div style='margin-top: 5px;'>Saves 'len' bytes from the given vector v into file fp.<br>  If 'len' is zero, then the whole vector is written to the file.<br>  Returns true if all requested bytes were successfully written, otherwise false.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileOpen' style='color: darkgreen;'>fileOpen</h3>
+<div id='line'><tt><b style='color: darkblue;'>FILE* fileOpen(const char *fullpath, const char *mode)</b></tt><div style='margin-top: 5px;'>Opens a file 'fullpath' with given mode 'mode'.<br>  Extra large files can be opened.<br><br>  The access modes can be:<br>  <ul>  <li>'r' Open a file for reading. The file must exist.</li>  <li>'w' Create an empty file for writing<br>If the file already exists, it will be overwritten.</li>  <li>'a' Open a file for appending.<br>Data is always written at the end of the file, expanding the file.</li>  <li>'r+' Open a file for both reading and writing.<br>The file must exist.</li>  <li>'w+' Create an empty file for both reading and writing<br>  If a file with the same name already exists, its contents are discarded and the file is treated as a new, empty file. </li>  <li>'a+' Open a file for both reading and writing.<br>  All output operations write data at the end of the file.<br>  Repositioning operations (fseek, fsetpos, rewind) affect the next input operation,<br>  but output operations move the position back to the end of the file.<br>  The file is created if it does not exist.</li>  </ul>  With the mode specifiers above the file is open as a text file.<br>  In order to open a file as a binary file, a 'b' character has to be included in the mode string.<br>  This additional 'b' character can either be appended at the end of the string<br>  (thus making the following compound modes: 'rb', 'wb', 'ab', 'r+b', 'w+b', 'a+b')<br>  or be inserted between the letter and the '+' sign for the mixed modes ('rb+', 'wb+', 'ab+').</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileClose' style='color: darkgreen;'>fileClose</h3>
+<div id='line'><tt><b style='color: darkblue;'>int fileClose(FILE *fp)</b></tt><div style='margin-top: 5px;'>Closes a file 'fp' that was previously opened with fileOpen.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileSize' style='color: darkgreen;'>fileSize</h3>
+<div id='line'><tt><b style='color: darkblue;'>int64_t fileSize(const char *fullpath)</b></tt><div style='margin-top: 5px;'>Returns the size of a given file 'fullpath' in bytes or -1 on errors.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileSize' style='color: darkgreen;'>fileSize</h3>
+<div id='line'><tt><b style='color: darkblue;'>int64_t fileSize(FILE *fp)</b></tt><div style='margin-top: 5px;'>Returns the size of a given file descriptor 'fp' in bytes or -1 on errors.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='filePosition' style='color: darkgreen;'>filePosition</h3>
+<div id='line'><tt><b style='color: darkblue;'>int64_t filePosition(FILE *fp)</b></tt><div style='margin-top: 5px;'>Returns the current file position in fp or -1 on errors.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileSeek' style='color: darkgreen;'>fileSeek</h3>
+<div id='line'><tt><b style='color: darkblue;'>int fileSeek(FILE *fp, int64_t offset, int origin)</b></tt><div style='margin-top: 5px;'>Sets the file position in fp according to offset and origin.<br>  Returns -1 on errors.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileReadable' style='color: darkgreen;'>fileReadable</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fileReadable(const char *fullpath)</b></tt><div style='margin-top: 5px;'>Returns true if file 'fullpath' or directory is readable.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileExists' style='color: darkgreen;'>fileExists</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fileExists(const char *fullpath)</b></tt><div style='margin-top: 5px;'>Returns true if given file 'fullpath' exists, otherwise false.<br>  Files can exist but are not readable.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileType' style='color: darkgreen;'>fileType</h3>
+<div id='line'><tt><b style='color: darkblue;'>int fileType(const char *fullpath)</b></tt><div style='margin-top: 5px;'>Returns the type of a file (-1=error, 0=file, 1=directory, 2=symlink)</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileModificationTime' style='color: darkgreen;'>fileModificationTime</h3>
+<div id='line'><tt><b style='color: darkblue;'>time_t fileModificationTime(const char *fullpath)</b></tt><div style='margin-top: 5px;'>Returns the modification time of a file 'fullpath'</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileDelete' style='color: darkgreen;'>fileDelete</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fileDelete(const char *fullpath)</b></tt><div style='margin-top: 5px;'>Deletes a file 'fullpath'.</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileRename' style='color: darkgreen;'>fileRename</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fileRename(const char *oldpath, const char *newpath)</b></tt><div style='margin-top: 5px;'>Renames a file from 'oldpath' into 'newpath'</div></div>
+</div>
+<div id='blockFunc'>
+<h3 id='fileCreateDirectory' style='color: darkgreen;'>fileCreateDirectory</h3>
+<div id='line'><tt><b style='color: darkblue;'>bool fileCreateDirectory(const char *fullpath, int mode=0777)</b></tt><div style='margin-top: 5px;'>Creates a directory.<br>  The specific permissions are ignored on Windows.</div></div>
+</div>
+<a href='#Top'>Top</a>
+<hr>
+<h2 id='License'>License</h2>
+<p><tt>The fio.h software is Public Domain (PD).<br><br>This is free and unencumbered software released into the public domain.<br><br>Anyone is free to copy, modify, publish, use, compile, sell, or<br>distribute this software, either in source code form or as a compiled<br>binary, for any purpose, commercial or non-commercial, and by any means.<br><br>In jurisdictions that recognize copyright laws, the author or authors<br>of this software dedicate any and all copyright interest in the<br>software to the public domain. We make this dedication for the benefit<br>of the public at large and to the detriment of our heirs and<br>successors. We intend this dedication to be an overt act of<br>relinquishment in perpetuity of all present and future rights to this<br>software under copyright law.<br><br>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,<br>EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF<br>MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.<br>IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR<br>OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,<br>ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR<br>OTHER DEALINGS IN THE SOFTWARE.<br><br>For more information, please refer to <a href="https://unlicense.org/">https://unlicense.org/</a><br></tt></p><br>
+<a href='#Top'>Top</a>
+<hr>
+<p>
+<div style='clear:: left; float: left;'>Copyright (C) Michael Sobol</div>
+</p><br>
+</body>
+</html>
