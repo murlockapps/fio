@@ -1,29 +1,25 @@
-// $VER: fio.h V1.3 (22.05.2023)
-// Copyright (C) 2023 Michael Sobol info@murlock.de - Public Domain (PD)
+// $VER: fio.h V1.6 (03.09.2026)
+// Copyright (C) 2026 Michael Sobol info@murlock.de
+// Public Domain (PD)
 //
-// Portable file functions for basic input and output (linux and windows)
+// Overview:
+//  fio.h V1.6 (03.09.2026)
+//  Copyright (C) 2026 Michael Sobol info@murlock.de - Public Domain (PD)
 //
-//  Features:
-//   +large files are supported (64bit)
-//   +all strings can contain utf8 encoding
-//   +same functions on all platforms (therefore also same code)
-//   +fseeko64 ftello64 fopen64 fstat64 stat64 ststat64 on all systems
-//   +system specific abstractions PATH_SEPARATOR EOL
-//   +byteorder specific read and write functions
-//   +single header library
+//  Portable file functions for basic input and output (Linux and Windows)
+//  fio is a small library for basic file operations.
+//  It comes as an STB-style single-file library with no external dependencies.
 //
-// passed tests:
-//  openSUSE Leap 15.2           -> 22.05.2023
-//  Devuan GNU/Linux 3 (beowulf) -> 22.05.2023
-//  Windows 10 Pro               -> 22.05.2023
-//  Windows 11 Pro               -> 22.05.2023
+// Features:
+//  +Support for large files (64bit)
+//  +All strings support utf8 encoding
+//  +Same API on all platforms
+//  +System specific abstractions for path separator and eol
+//  +Byteorder specific read and write functions
+//  +Single header library (no extra compiling is necessary)
+//  +Standalone, no extra libraries needed
 //
-// history:
-//   v1.3 (22.05.2023): fread_u8 fwrite_u8
-//   v1.2 (29.06.2021): compiler bugfix for windows
-//   v1.1 (15.03.2021): fread_u16 fread_u32 fread_u64
-//
-// license:
+// License:
 //  The fio software is Public Domain (PD).
 //  This is free and unencumbered software released into the public domain.
 //
@@ -39,7 +35,7 @@
 //  relinquishment in perpetuity of all present and future rights to this
 //  software under copyright law.
 //
-//  THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 //  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 //  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 //  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
@@ -49,28 +45,57 @@
 //
 //  For more information, please refer to <http://unlicense.org>
 //
+// Passed tests:
+//  openSUSE Leap 15.2           -> 22.05.2023
+//  Devuan GNU/Linux 3 (beowulf) -> 22.05.2023
+//  Windows 10 Pro               -> 22.05.2023
+//  Windows 11 Pro               -> 03.09.2026
+//
+// Compatible compilers:
+//  g++ 8.3.0
+//  TDM-GCC 9.2.0
+//  TDM-GCC 10.3.0
+//
+// Version history:
+//  V1.6 (03.09.2026):
+//   Return value was wrong in fread_bytes.
+//   The self-test was outsourced into fiotest.cpp.
+//   Unnecessary macros removed and portable additional functions added
+//   such as filePosition and fileSeek.
+//  V1.5 (11.09.2025):
+//   Rename functions fileLoadBytes fileSaveBytes into fread_bytes fwrite_bytes
+//  V1.4 (23.08.2025):
+//   New functions fread_flt, fread_dbl, fwrite_flt and fwrite_dbl.
+//  V1.3 (22.05.2023):
+//   New functions fread_u8 and fwrite_u8.
+//   Changed behaviour if file pointer is invalid.
+//  V1.2 (29.06.2021):
+//   Compiler bugfix for windows
+//   WINVER undef
+//  V1.1 (15.03.2021):
+//   The functions fread_u16, fread_u32 and fread_u64 have been changed.
+//   They return true on success and false on fail now.
+//   The documentation was revised.
+//
 // Feel free to contact me if there are any problems or further questions.
 // Please send fio bug reports to info@murlock.de
 //
 #ifndef _FIO_H_
 #define _FIO_H_
 
-// library version information
+// Library version information
 #define FIO_VER 1
-#define FIO_REV 3
-#define FIO_VERSTR "1.3"
+#define FIO_REV 6
+#define FIO_VERSTR "1.6"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
 #include <vector>
-#include <inttypes.h> // for selftest
 
 #ifdef __linux__
-// ***************
-// Linux specific
-// ***************
+// Linux specific implementation
 #include <limits.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -78,13 +103,11 @@
 
 typedef struct stat64 ststat64;
 
-#define PATH_SEPARATOR '/'
-#define EOL "\n"
+#define FIO_PATH_SEPARATOR '/'
+#define FIO_EOL "\n"
 
-#elif defined(_WIN32) || defined(WIN32)
-// *****************
-// Windows specific
-// *****************
+#elif defined(_WIN32)
+// Windows specific implementation
 #ifndef _UNICODE
 #define _UNICODE
 #endif
@@ -92,9 +115,9 @@ typedef struct stat64 ststat64;
 #define UNICODE
 #endif
 
-#if __MINGW32__
+#ifdef __MINGW32__
 #undef __MSVCRT_VERSION__
-#define __MSVCRT_VERSION__ 0x0601
+#define __MSVCRT_VERSION__ 0x0A00
 #endif
 
 #include <tchar.h>
@@ -102,56 +125,50 @@ typedef struct stat64 ststat64;
 #ifdef WINVER
 #undef WINVER
 #endif
-#define WINVER 0x0601
+#define WINVER 0x0A00
 
 #ifdef _WIN32_WINNT
 #undef _WIN32_WINNT
 #endif
-#define _WIN32_WINNT 0x0601
+#define _WIN32_WINNT 0x0A00
 
 #include <windows.h>
 #include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define fseeko64 _fseeki64
-#define ftello64 _ftelli64
-#define fopen64 _wfopen
-#define fstat64 _fstat64
-#ifdef stat64
-#undef stat64
-#endif
-#ifndef stat64
-#define stat64 _wstat64
-#endif
-
-// stat64 vs ststat64 ?
 typedef struct __stat64 ststat64;
 
-#define PATH_SEPARATOR '\\'
-#define EOL "\r\n"
+#define FIO_PATH_SEPARATOR '\\'
+#define FIO_EOL "\r\n"
 
 // Convert a wide unicode string to an UTF8 string
 static std::string wstring_to_utf8(const std::wstring &wstr) {
   if (wstr.empty()) return std::string();
-  int size_needed = WideCharToMultiByte(CP_UTF8, 0,
-                                        &wstr[0], (int)wstr.size(),
+  int size_needed = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS,
+                                        wstr.data(), (int)wstr.size(),
                                         NULL, 0, NULL, NULL);
-  std::string strTo( size_needed, 0 );
-  WideCharToMultiByte(CP_UTF8, 0, &wstr[0],
-                      (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+  if (size_needed <= 0) return std::string();
+  std::string strTo(size_needed, 0);
+  int size_converted = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS,
+                                           wstr.data(), (int)wstr.size(),
+                                           &strTo[0], size_needed, NULL, NULL);
+  if (size_converted <= 0) return std::string();
   return strTo;
 }
 
 // Convert an UTF8 string to a wide unicode string
 static std::wstring utf8_to_wstring(const std::string &str) {
   if (str.empty()) return std::wstring();
-  int size_needed = MultiByteToWideChar(CP_UTF8, 0,
-                                        &str[0], (int)str.size(),
+  int size_needed = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                                        str.data(), (int)str.size(),
                                         NULL, 0);
-  std::wstring wstrTo( size_needed, 0 );
-  MultiByteToWideChar(CP_UTF8, 0, &str[0],
-                      (int)str.size(), &wstrTo[0], size_needed);
+  if (size_needed <= 0) return std::wstring();
+  std::wstring wstrTo(size_needed, 0);
+  int size_converted = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                                           str.data(), (int)str.size(),
+                                           &wstrTo[0], size_needed);
+  if (size_converted <= 0) return std::wstring();
   return wstrTo;
 }
 
@@ -195,58 +212,60 @@ static std::wstring utf8_to_wstring(const std::string &str) {
 // The buffer size in bytes for catching the file input and output.
 #define FILEIOBUFSIZE 8192
 
-size_t strSize(const char *s);
-bool isBigEndian(void);
+size_t strSize(const char *s) noexcept;
+bool isBigEndian() noexcept;
 
-int16_t  bswap_16(int16_t v);
-uint16_t bswap_u16(uint16_t v);
-int32_t  bswap_32(int32_t v);
-uint32_t bswap_u32(uint32_t v);
-int64_t  bswap_64(int64_t v);
-uint64_t bswap_u64(uint64_t v);
+int16_t  bswap_16(int16_t v) noexcept;
+uint16_t bswap_u16(uint16_t v) noexcept;
+int32_t  bswap_32(int32_t v) noexcept;
+uint32_t bswap_u32(uint32_t v) noexcept;
+int64_t  bswap_64(int64_t v) noexcept;
+uint64_t bswap_u64(uint64_t v) noexcept;
 
-bool fread_u8(FILE *fp, uint8_t &rv);
-bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv);
-bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv);
-bool fread_u64(FILE *fp, bool bBigEndian, uint64_t &rv);
-bool fwrite_u8(FILE *fp, uint8_t v);
-bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v);
-bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v);
-bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v);
+bool fread_u8(FILE *fp, uint8_t &rv) noexcept;
+bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv) noexcept;
+bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv) noexcept;
+bool fread_u64(FILE *fp, bool bBigEndian, uint64_t &rv) noexcept;
+bool fread_flt(FILE *fp, bool bBigEndian, float &rv) noexcept;
+bool fread_dbl(FILE *fp, bool bBigEndian, double &rv) noexcept;
+bool fread_bytes(FILE *fp, std::vector<uint8_t> &rv, int64_t len=0) noexcept;
 
-std::vector<uint8_t> fileLoadBytes(FILE *fp, int64_t len=0);
-bool fileSaveBytes(FILE *fp, std::vector<uint8_t> &v, int64_t len=0);
+bool fwrite_u8(FILE *fp, uint8_t v) noexcept;
+bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v) noexcept;
+bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v) noexcept;
+bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v) noexcept;
+bool fwrite_flt(FILE *fp, bool bBigEndian, float v) noexcept;
+bool fwrite_dbl(FILE *fp, bool bBigEndian, double v) noexcept;
+bool fwrite_bytes(FILE *fp, const std::vector<uint8_t> &v, int64_t len=0) noexcept;
 
-FILE* fileOpen(const char *fullpath, const char *mode);
-int fileClose(FILE *fp);
-int64_t fileSize(const char *fullpath);
-int64_t fileSize(FILE *fp);
-bool fileReadable(const char *fullpath);
-bool fileExists(const char *fullpath);
-int fileType(const char *fullpath);
-time_t fileModificationTime(const char *fullpath);
-bool fileDelete(const char *fullpath);
+FILE* fileOpen(const char *fullpath, const char *mode) noexcept;
+int fileClose(FILE *fp) noexcept;
+int64_t fileSize(const char *fullpath) noexcept;
+int64_t fileSize(FILE *fp) noexcept;
+int64_t filePosition(FILE *fp) noexcept;
+int fileSeek(FILE *fp, int64_t offset, int origin) noexcept;
+bool fileReadable(const char *fullpath) noexcept;
+bool fileExists(const char *fullpath) noexcept;
+int fileType(const char *fullpath) noexcept;
+time_t fileModificationTime(const char *fullpath) noexcept;
+bool fileDelete(const char *fullpath) noexcept;
+bool fileRename(const char *oldpath, const char *newpath) noexcept;
+bool fileCreateDirectory(const char *fullpath, int mode = 0777) noexcept;
 
 // ****************
 //  IMPLEMENTATION
 // ****************
 
-// Returns string size in bytes
-size_t strSize(const char *s) {
-  size_t ret = 0;
-  if (s) {
-    size_t n = 0;
-    while(true) {
-      if (s[n] == '\0') break;
-      n++;
-    }
-    ret = n;
-  }
-  return ret;
+// Returns the string size in bytes from string 's'.
+size_t strSize(const char *s) noexcept {
+  if (!s) return 0;
+  const char *p = s;
+  while (*p) ++p;
+  return (size_t)(p - s);
 }
 
-// Returns true on big endian computers otherwise false
-bool isBigEndian(void) {
+// Returns true on big-endian systems and false otherwise.
+bool isBigEndian() noexcept {
   union {
     uint32_t i;
     char c[4];
@@ -254,36 +273,36 @@ bool isBigEndian(void) {
   return (bint.c[0] == 1);
 }
 
-// Swap little endian/big endian (int16_t)
-int16_t bswap_16(int16_t v) {
+// Swaps the byte order between little-endian and big-endian (int16_t)
+int16_t bswap_16(int16_t v) noexcept {
   return (int16_t)bswap_u16((uint16_t)(v));
 }
 
-// Swap little endian/big endian (uint16_t)
-uint16_t bswap_u16(uint16_t v) {
+// Swaps the byte order between little-endian and big-endian (uint16_t)
+uint16_t bswap_u16(uint16_t v) noexcept {
   return ((((v)>>8)&0xff) | (((v)&0xff)<<8));
 }
 
-// Swap little endian/big endian (int32_t)
-int32_t bswap_32(int32_t v) {
+// Swaps the byte order between little-endian and big-endian (int32_t)
+int32_t bswap_32(int32_t v) noexcept {
   return (int32_t)bswap_u32((uint32_t)(v));
 }
 
-// Swap little endian/big endian (uint32_t)
-uint32_t bswap_u32(uint32_t v) {
+// Swaps the byte order between little-endian and big-endian (uint32_t)
+uint32_t bswap_u32(uint32_t v) noexcept {
   return ((((v) & 0xff000000) >> 24)
           | (((v) & 0x00ff0000) >>  8) |
           (((v) & 0x0000ff00) << 8)
           | (((v) & 0x000000ff) << 24));
 }
 
-// Swap little endian/big endian (int64_t)
-int64_t bswap_64(int64_t v) {
-  return (int64_t)bswap_u32((uint64_t)(v));
+// Swaps the byte order between little-endian and big-endian (int64_t)
+int64_t bswap_64(int64_t v) noexcept {
+  return (int64_t)bswap_u64((uint64_t)(v));
 }
 
-// Swap little endian/big endian (uint64_t)
-uint64_t bswap_u64(uint64_t v) {
+// Swaps the byte order between little-endian and big-endian (uint64_t)
+uint64_t bswap_u64(uint64_t v) noexcept {
   v = ((v<<8) & 0xFF00FF00FF00FF00ULL)
     | ((v>>8) & 0x00FF00FF00FF00FFULL);
   v = ((v<<16) & 0xFFFF0000FFFF0000ULL)
@@ -291,69 +310,115 @@ uint64_t bswap_u64(uint64_t v) {
   return ((v<<32) | ((v>>32) & 0xFFFFFFFFULL));
 }
 
-// Read single byte from file
-bool fread_u8(FILE *fp, uint8_t &rv) {
+// Reads a single byte from the file pointer 'fp'.
+// Stores the byte read from the file in the variable referenced by 'rv'.
+// Returns true on success and false otherwise.
+bool fread_u8(FILE *fp, uint8_t &rv) noexcept {
  if (!fp) return false;
-
-  uint16_t v = 0;
-  if (1 != fread(&v, sizeof(uint8_t), 1, fp)) {
-    return false;
-  }
-  rv=v;
-
-  return true;
+ return (fread(&rv, sizeof(uint8_t), 1, fp) == 1);
 }
 
-// Read unsigned short (2 bytes) from file
-bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv) {
+// Reads an unsigned short (2 bytes) from the file pointer 'fp'.
+// Stores the value read from the file in the variable referenced by 'rv'.
+// If 'bBigEndian' is true, the byte order is interpreted as big-endian.
+// Returns true on success and false otherwise.
+bool fread_u16(FILE *fp, bool bBigEndian, uint16_t &rv) noexcept {
   if (!fp) return false;
-
-  uint16_t v = 0;
-  if (1 != fread(&v, sizeof(uint16_t), 1, fp)) {
-    return false;
-  }
-  if (isBigEndian() != bBigEndian) {
-    v = bswap_u16(v);
-  }
-  rv=v;
-
+  if (fread(&rv, sizeof(uint16_t), 1, fp) != 1) return false;
+  if (isBigEndian() != bBigEndian) rv = bswap_u16(rv);
   return true;
 }
 
-// Read unsigned int (4 bytes) from file
-bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv) {
+// Reads an unsigned int (4 bytes) from the file pointer 'fp'.
+// Stores the value read from the file in the variable referenced by 'rv'.
+// If 'bBigEndian' is true, the byte order is interpreted as big-endian.
+// Returns true on success and false otherwise.
+bool fread_u32(FILE *fp, bool bBigEndian, uint32_t &rv) noexcept {
   if (!fp) return false;
-
-  uint32_t v = 0;
-  if (1 != fread(&v, sizeof(uint32_t), 1, fp)) {
-    return false;
-  }
-  if (isBigEndian() != bBigEndian) {
-    v = bswap_u32(v);
-  }
-  rv=v;
-
+  if (fread(&rv, sizeof(uint32_t), 1, fp) != 1) return false;
+  if (isBigEndian() != bBigEndian) rv = bswap_u32(rv);
   return true;
 }
 
-// Read uint64_t (8 bytes) from file
-bool fread_u64(FILE *fp, bool bBigEndian, uint64_t &rv) {
+// Reads an uint64_t (8 bytes) from the file pointer 'fp'.
+// Stores the value read from the file in the variable referenced by 'rv'.
+// If 'bBigEndian' is true, the byte order is interpreted as big-endian.
+// Returns true on success and false otherwise.
+bool fread_u64(FILE *fp, bool bBigEndian, uint64_t &rv) noexcept {
   if (!fp) return false;
-
-  uint64_t v=0;
-  if (1 != fread(&v, sizeof(uint64_t), 1, fp)) {
-    return false;
-  }
-  if (isBigEndian() != bBigEndian) {
-    v = bswap_u64(v);
-  }
-  rv=v;
-
+  if (fread(&rv, sizeof(uint64_t), 1, fp) != 1) return false;
+  if (isBigEndian() != bBigEndian) rv = bswap_u64(rv);
   return true;
 }
 
-// Write single byte to file
-bool fwrite_u8(FILE *fp, uint8_t v) {
+// Reads a float value (4 bytes) from the file pointer 'fp'.
+// Stores the value read from the file in the variable referenced by 'rv'.
+// If 'bBigEndian' is true, the byte order is interpreted as big-endian.
+// Returns true on success and false otherwise.
+bool fread_flt(FILE *fp, bool bBigEndian, float &rv) noexcept {
+  if (!fp) return false;
+  union {
+    float flt;
+    uint32_t u32;
+  } bits;
+  if (!fread_u32(fp, bBigEndian, bits.u32)) {
+    return false;
+  }
+  rv = bits.flt;
+  return true;
+}
+
+// Reads a double value (8 bytes) from the file pointer 'fp'.
+// Stores the value read from the file in the variable referenced by 'rv'.
+// If 'bBigEndian' is true, the byte order is interpreted as big-endian.
+// Returns true on success and false otherwise.
+bool fread_dbl(FILE *fp, bool bBigEndian, double &rv) noexcept {
+  if (!fp) return false;
+  union {
+    double dbl;
+    uint64_t u64;
+  } bits;
+  if (!fread_u64(fp, bBigEndian, bits.u64)) {
+    return false;
+  }
+  rv = bits.dbl;
+  return true;
+}
+
+// Loads len bytes from the current file position into a vector of bytes.
+// If len is zero, then all remaining bytes are loaded up to the end of the file.
+// Returns true if all requested bytes were successfully read, otherwise false.
+bool fread_bytes(FILE *fp, std::vector<uint8_t> &rv,  int64_t len /* =0 */) noexcept {
+  if (!fp) return false;
+  if (len < 0) return false;
+  if (len == 0) {
+    int64_t sz = fileSize(fp);
+    if (sz < 0) return false;
+    int64_t pos = filePosition(fp);
+    if (pos < 0 || sz < pos) return false;
+    len = sz - pos;
+  }
+  rv.clear();
+  rv.reserve(static_cast<size_t>(len));
+  int64_t remaining = len;
+  uint8_t buf[FILEIOBUFSIZE];
+  while(remaining > 0) {
+    size_t nBytes = 0;
+    if (remaining >= FILEIOBUFSIZE) {
+      nBytes = fread(buf, 1, FILEIOBUFSIZE, fp);
+    } else {
+      nBytes = fread(buf, 1, static_cast<size_t>(remaining), fp);
+    }
+    if (nBytes == 0) break;
+    rv.insert(rv.end(), buf, buf + nBytes);
+    remaining -= static_cast<int64_t>(nBytes);
+  }
+  return remaining == 0;
+}
+
+// Writes a single byte value 'v' to the file pointer 'fp'.
+// Returns true on success and false otherwise.
+bool fwrite_u8(FILE *fp, uint8_t v) noexcept {
   if (!fp) return false;
 
   if (1 != fwrite(&v, sizeof(uint8_t), 1, fp)) {
@@ -363,8 +428,10 @@ bool fwrite_u8(FILE *fp, uint8_t v) {
   return true;
 }
 
-// Write unsigned short (2 bytes) to file
-bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v) {
+// Writes an unsigned short (2 bytes) value 'v' to file pointer 'fp'.
+// If 'bBigEndian' is true, the value is written in big-endian byte order.
+// Returns true on success and false otherwise.
+bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v) noexcept {
   if (!fp) return false;
 
   if (isBigEndian() != bBigEndian) {
@@ -377,8 +444,10 @@ bool fwrite_u16(FILE *fp, bool bBigEndian, uint16_t v) {
   return true;
 }
 
-// Write unsigned int (4 bytes) to file
-bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v) {
+// Writes an unsigned int (4 bytes) value 'v' to file pointer 'fp'.
+// If 'bBigEndian' is true, the value is written in big-endian byte order.
+// Returns true on success and false otherwise.
+bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v) noexcept {
   if (!fp) return false;
 
   if (isBigEndian() != bBigEndian) {
@@ -391,8 +460,10 @@ bool fwrite_u32(FILE *fp, bool bBigEndian, uint32_t v) {
   return true;
 }
 
-// Write uint64_t (8 bytes) to file
-bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v) {
+// Writes an uint64_t (8 bytes) value 'v' to file pointer 'fp'.
+// If 'bBigEndian' is true, the value is written in big-endian byte order.
+// Returns true on success and false otherwise.
+bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v) noexcept {
   if (!fp) return false;
 
   if (isBigEndian() != bBigEndian) {
@@ -405,631 +476,222 @@ bool fwrite_u64(FILE *fp, bool bBigEndian, uint64_t v) {
   return true;
 }
 
-// Loads len bytes into an vector of bytes.
-// If len is zero, then the whole file is loaded up to the end of the file.
-std::vector<uint8_t> fileLoadBytes(FILE *fp, int64_t len /* =0 */) {
-  std::vector<uint8_t> v;
-  if (len == 0) {
-    len = fileSize(fp);
-  }
-  const int64_t n = len;
-  uint8_t buf[FILEIOBUFSIZE];
-  while(len > 0 && !feof(fp)) {
-    size_t bytes = 0;
-    if (len >= FILEIOBUFSIZE) {
-      bytes = fread(buf, 1, FILEIOBUFSIZE, fp);
-    } else {
-      bytes = fread(buf, 1, len, fp);
-    }
-    for (size_t i = 0; i < bytes; i++) {
-      v.push_back(buf[i]);
-    }
-    bytes > 0 ? len -= bytes : len=0;
-  }
-  if (v.size() != (size_t)n) {
-    v.clear();
-  }
-  return v;
+// Writes a float (4 bytes) value 'v' to file pointer 'fp'.
+// If 'bBigEndian' is true, the value is written in big-endian byte order.
+// Returns true on success and false otherwise.
+bool fwrite_flt(FILE *fp, bool bBigEndian, float v) noexcept {
+  union {
+    float flt;
+    uint32_t u32;
+  } bits;
+  bits.flt = v;
+  return fwrite_u32(fp, bBigEndian, bits.u32);
 }
 
-// Saves len bytes from the given vector v into file fp.
-// If len is zero, then write the whole vector into the file fp.
-// Returns true if successfull, otherwise false.
-bool fileSaveBytes(FILE *fp, std::vector<uint8_t> &v, int64_t len /* =0 */) {
-  if (len == 0 || (size_t)len > v.size()) {
-    len = v.size();
+
+// Writes a double (8 bytes) value 'v' to file pointer 'fp'.
+// If 'bBigEndian' is true, the value is written in big-endian byte order.
+// Returns true on success and false otherwise.
+bool fwrite_dbl(FILE *fp, bool bBigEndian, double v) noexcept {
+  union {
+    double dbl;
+    uint64_t u64;
+  } bits;
+  bits.dbl = v;
+  return fwrite_u64(fp, bBigEndian, bits.u64);
+}
+
+// Saves 'len' bytes from the given vector v into file fp.
+// If 'len' is zero, then the whole vector is written to the file.
+// Returns true if all requested bytes were successfully written, otherwise false.
+bool fwrite_bytes(FILE *fp, const std::vector<uint8_t> &v, int64_t len /* =0 */) noexcept {
+  if (!fp) return false;
+  if (len < 0) return false;
+  if (len == 0 || static_cast<size_t>(len) > v.size()) {
+    len = static_cast<int64_t>(v.size());
   }
-  uint8_t buf[FILEIOBUFSIZE];
   size_t n = 0;
-  while(len > 0 && !feof(fp)) {
-    size_t wbytes = 0; // current bytes in buffer
-    size_t bytes  = 0;  // successfully written bytes
+  uint8_t buf[FILEIOBUFSIZE];
+  while(len > 0) {
+    size_t nBufferBytes   = 0;
+    size_t nBytesWritten  = 0;
     if (len >= FILEIOBUFSIZE) {
-      wbytes = FILEIOBUFSIZE;
+      nBufferBytes = FILEIOBUFSIZE;
     } else {
-      wbytes = len;
+      nBufferBytes = (size_t)len;
     }
-    // copy to buf
-    for (size_t i = 0; i < wbytes; i++) {
-      buf[i] = v[n++];
-    }
-    // write buf
-    bytes = fwrite(buf, 1, wbytes, fp);
-    if (bytes != wbytes) {
+    memcpy(buf, &v[n], nBufferBytes);
+    n += nBufferBytes;
+    nBytesWritten = fwrite(buf, 1, nBufferBytes, fp);
+    if (nBufferBytes != nBytesWritten) {
       return false;
     }
-    len -= bytes;
+    len -= nBytesWritten;
   }
   return true;
 }
 
 // Opens a file in 64-bit mode
-FILE* fileOpen(const char *fullpath, const char *mode) {
+FILE* fileOpen(const char *fullpath, const char *mode) noexcept {
 #ifdef __linux__
   return fopen64(fullpath, mode);
-#elif defined(_WIN32) || defined(WIN32)
-  return _wfopen(utf8_to_wstring(fullpath).c_str(),
-		 utf8_to_wstring(mode).c_str());
+#elif defined(_WIN32)
+  std::wstring wpath = utf8_to_wstring(fullpath);
+  std::wstring wmode = utf8_to_wstring(mode);
+  return _wfopen(wpath.c_str(), wmode.c_str());
 #endif
 }
 
-// Closes a file
-int fileClose(FILE *fp) {
-  int ret = 0;
-  if (fp == 0){
-    ret = EOF;
-  } else {
-    ret = fclose(fp);
-  }
-  return ret;
+// Closes a file 'fp'
+int fileClose(FILE *fp) noexcept {
+  return fp ? fclose(fp) : EOF;
 }
 
-// Returns the size of a given file in bytes or -1 on errors.
-int64_t fileSize(const char *fullpath) {
+// Returns the size of a given file 'fullpath' in bytes or -1 on errors.
+int64_t fileSize(const char *fullpath) noexcept {
   if (strSize(fullpath) == 0) return -1;
   ststat64 st_buf;
 #ifdef __linux__
-  size_t rc = stat64(fullpath, &st_buf);
-#elif defined(_WIN32) || defined(WIN32)
-  size_t rc = stat64(utf8_to_wstring(fullpath).c_str(), &st_buf);
+  int rc = stat64(fullpath, &st_buf);
+#elif defined(_WIN32)
+  std::wstring wpath = utf8_to_wstring(fullpath);
+  int rc = _wstat64(wpath.c_str(), &st_buf);
 #endif
   return (rc == 0 ? st_buf.st_size : -1);
 }
 
-// Returns the size of a given file descriptor in bytes or -1 on errors.
-int64_t fileSize(FILE *fp) {
+// Returns the size of a given file descriptor 'fp' in bytes or -1 on errors.
+int64_t fileSize(FILE *fp) noexcept {
+  if (!fp) return -1;
   ststat64 st_buf;
-  size_t rc = fstat64(fileno(fp), &st_buf);
+#ifdef __linux__
+  int rc = fstat64(fileno(fp), &st_buf);
+#elif defined(_WIN32)
+  int rc = _fstat64(fileno(fp), &st_buf);
+#endif
   return (rc == 0 ? st_buf.st_size : -1);
 }
 
-// Returns true if file or directory is readable
-bool fileReadable(const char *fullpath) {
+// Returns the current file position in fp or -1 on errors.
+int64_t filePosition(FILE *fp) noexcept {
+if (!fp) return -1;
+#ifdef __linux__
+  return ftello64(fp);
+#elif defined(_WIN32)
+  return _ftelli64(fp);
+#endif
+}
+
+// Sets the file position in fp according to offset and origin.
+// Returns -1 on errors.
+int fileSeek(FILE *fp, int64_t offset, int origin) noexcept {
+  if (!fp) return -1;
+#ifdef __linux__
+  return fseeko64(fp, offset, origin);
+#elif defined(_WIN32)
+  return _fseeki64(fp, offset, origin);
+#endif
+}
+
+// Returns true if file 'fullpath' or directory is readable.
+bool fileReadable(const char *fullpath) noexcept {
   if (strSize(fullpath) == 0) return false;
 #ifdef __linux__
   if (access(fullpath, R_OK) != 0) return false;
-#elif defined(_WIN32) || defined(WIN32)
-  if (_waccess(utf8_to_wstring(fullpath).c_str(), 4) != 0) return false;
+#elif defined(_WIN32)
+  std::wstring wpath = utf8_to_wstring(fullpath);
+  if (_waccess(wpath.c_str(), R_OK) != 0) return false;
 #endif
   return true;
 }
 
-// Returns true if file exits, otherwise false
-bool fileExists(const char *fullpath) {
-  bool ret=false;
-  if (strSize(fullpath) > 0) {
-    ststat64 st_buf;
-    int rc;
+// Returns true if given file 'fullpath' exists, otherwise false.
+// Files can exist but are not readable.
+bool fileExists(const char *fullpath) noexcept {
+  if (strSize(fullpath) == 0) return false;
+  ststat64 st_buf;
+  int rc;
 #ifdef __linux__
-    rc = stat64(fullpath, &st_buf);
-#elif defined(_WIN32) || defined(WIN32)
-    rc = stat64(utf8_to_wstring(fullpath).c_str(), &st_buf);
+  rc = stat64(fullpath, &st_buf);
+#elif defined(_WIN32)
+  std::wstring wpath = utf8_to_wstring(fullpath);
+  rc = _wstat64(wpath.c_str(), &st_buf);
 #else
-    rc = -1;
+  rc = -1;
 #endif
-    ret = (rc == 0);
-  }
-  return ret;
+  return (rc == 0);
 }
 
-// Returns the type of a file
+// Returns the type of a file.
 // (-1=error, 0=file, 1=directory, 2=symlink)
-int fileType(const char *fullpath) {
+int fileType(const char *fullpath) noexcept {
   if (strSize(fullpath) == 0) return -1;
   ststat64 st_buf;
 #ifdef __linux__
-  int rc = stat64(fullpath, &st_buf);
-#elif defined(_WIN32) || defined(WIN32)
-  int rc = stat64(utf8_to_wstring(fullpath).c_str(), &st_buf);
+  int rc = lstat64(fullpath, &st_buf);
+#elif defined(_WIN32)
+  std::wstring wpath = utf8_to_wstring(fullpath);
+  int rc = _wstat64(wpath.c_str(), &st_buf);
 #endif
-  if (rc == 0) {
-    if (S_ISREG(st_buf.st_mode)) {
-      rc = 0; // regular file
-    } else if (S_ISDIR(st_buf.st_mode)) {
-      rc = 1; // directory
-    } else {
+  if (rc != 0) return -1;
+  if (S_ISREG(st_buf.st_mode)) return 0; // regular file
+  if (S_ISDIR(st_buf.st_mode)) return 1; // directory
 #ifdef __linux__
-      if (S_ISLNK(st_buf.st_mode)) {
-        rc = 2; // symbolic link
-      }
+  if (S_ISLNK(st_buf.st_mode)) return 2; // symbolic link
 #endif
-      // S_ISLNK is not defined in windows!
-    }
-  } else {
-    rc = -1;
-  }
-  return rc;
+  return -1;
 }
 
-// Returns the modification time of a file
-time_t fileModificationTime(const char *fullpath) {
-  time_t ret=0;
-  if (strSize(fullpath) == 0) return ret;
+// Returns the modification time of a file 'fullpath'
+time_t fileModificationTime(const char *fullpath) noexcept {
+  if (strSize(fullpath) == 0) return 0;
   ststat64 st_buf;
+  int rc = 0;
 #ifdef __linux__
-  int rc = stat64(fullpath, &st_buf);
-#elif defined(_WIN32) || defined(WIN32)
-  int rc = stat64(utf8_to_wstring(fullpath).c_str(), &st_buf);
+  rc = stat64(fullpath, &st_buf);
+#elif defined(_WIN32)
+  std::wstring wpath = utf8_to_wstring(fullpath);
+  rc = _wstat64(wpath.c_str(), &st_buf);
 #endif
-  if (rc == 0) {
-    ret=st_buf.st_mtime;
-  }
+  return (rc == 0) ? st_buf.st_mtime : 0;
+}
+
+// Deletes a file 'fullpath'
+bool fileDelete(const char *fullpath) noexcept {
+  if (strSize(fullpath) == 0) return false;
+  bool ret = false;
+#ifdef __linux__
+  ret = (unlink(fullpath) != -1);
+#elif defined(_WIN32)
+  std::wstring wpath = utf8_to_wstring(fullpath);
+  ret = (_wunlink(wpath.c_str()) != -1);
+#endif
   return ret;
 }
 
-// Deletes a file
-bool fileDelete(const char *fullpath) {
-  bool ret=false;
-  if (strSize(fullpath) == 0) return ret;
+// Renames a file from 'oldpath' into 'newpath'
+bool fileRename(const char *oldpath, const char *newpath) noexcept {
+  if (strSize(oldpath) == 0 || strSize(newpath) == 0) return false;
 #ifdef __linux__
-  ret=(unlink(fullpath) != -1);
-#elif defined(_WIN32) || defined(WIN32)
-  ret=(_wunlink(utf8_to_wstring(fullpath).c_str()) != -1);
+  return (rename(oldpath, newpath) == 0);
+#elif defined(_WIN32)
+  std::wstring woldpath = utf8_to_wstring(oldpath);
+  std::wstring wnewpath = utf8_to_wstring(newpath);
+  return (_wrename(woldpath.c_str(), wnewpath.c_str()) == 0);
 #endif
-  return ret;
 }
 
-
-// ***************
-// Selftest
-// ***************
-
-// For selftest add -DSELFTEST to the compiler
-#ifdef SELFTEST
-void fioPerr(int m=0) {
-  switch(m) {
-  case 0:  fprintf(stderr, "fioSelftest:"); break;
-  case 1:  fprintf(stdout, "fioSelftest [PASSED]\n"); break;
-  case 2:  fprintf(stderr, "fioSelftest [FAILED]\n"); break;
-  }
-}
-bool fioSelftest() {
-  bool isOk = true;
-  {
-    // check version information
-    int exp_val=1;
-    if (FIO_VER!=exp_val) {
-      fioPerr();
-      fprintf(stderr, " Error: FIO_VER is not %d\n", exp_val);
-      isOk=false;
-    }
-    exp_val=3;
-    if (FIO_REV!=exp_val) {
-      fioPerr();
-      fprintf(stderr, " Error: FIO_REV is not %d\n", exp_val);
-      isOk=false;
-    }
-    const size_t SS=4;
-    const char se[SS]="1.3"; // expected value
-    const char sv[SS]=FIO_VERSTR; // real value
-    for (size_t i=0; i<SS; i++) {
-      if (sv[i]!=se[i]) {
-        fioPerr();
-        fprintf(stderr, " Error: FIO_VERSTR is not '%s'\n", se);
-        isOk=false;
-        break;
-      }
-    }
-  }
-  {
-    // check PATH_SEPARATOR and EOL
+// Creates a directory.
+// The specific permissions are ignored on Windows.
+bool fileCreateDirectory(const char *fullpath, int mode /* = 0777 */) noexcept {
+  if (strSize(fullpath) == 0) return false;
 #ifdef __linux__
-    const char ce = '/';
-    const char *se = "\n";
-#elif defined(_WIN32) || defined(WIN32)
-    const char ce = '\\';
-    const char *se = "\r\n";
+  return (mkdir(fullpath, mode) == 0);
+#elif defined(_WIN32)
+  std::wstring wpath = utf8_to_wstring(fullpath);
+  return (_wmkdir(wpath.c_str()) == 0);
 #endif
-    if (ce!=PATH_SEPARATOR) {
-      fioPerr();
-      fprintf(stderr, " Error: PATH_SEPARATOR is not '%c'\n", ce);
-      isOk=false;
-    }
-    const char *sv=EOL;
-    if ( (se[0]!=sv[0]) || (se[1]!=sv[1])) {
-      fioPerr();
-#ifdef __linux__
-      fprintf(stderr, " Error: EOL is not '\\n'\n");
-#elif defined(_WIN32) || defined(WIN32)
-      fprintf(stderr, " Error: EOL is not '\\r\\n'\n");
-#endif
-      isOk=false;
-    }
-  }
-  {
-    // check ENDIAN_LITTLE ENDIAN_BIG and FILEIOBUFSIZE
-    if (false != ENDIAN_LITTLE) {
-      fioPerr();
-      fprintf(stderr, " Error: ENDIAN_LITTLE is not 0\n");
-      isOk=false;
-    }
-    if (true != ENDIAN_BIG) {
-      fioPerr();
-      fprintf(stderr, " Error: ENDIAN_LITTLE is not 1\n");
-      isOk=false;
-    }
-    int ie=8192;
-    if (ie != FILEIOBUFSIZE) {
-      fioPerr();
-      fprintf(stderr, " Error: FILEIOBUFSIZE is not %d\n", ie);
-      isOk=false;
-    }
-  }
-  {
-    // check strSize
-    if (0!=strSize(0) || 0!=strSize(NULL)) {
-      fioPerr();
-      fprintf(stderr, " Error: strSize(0) is not 0\n");
-      isOk=false;
-    }
-    if (0!=strSize("")) {
-      fioPerr();
-      fprintf(stderr, " Error: strSize(\"\") is not 0\n");
-      isOk=false;
-    }
-    if (0!=strSize("\0")) {
-      fioPerr();
-      fprintf(stderr, " Error: strSize(\"\\0\") is not 0\n");
-      isOk=false;
-    }
-    if (3!=strSize("foo")) {
-      fioPerr();
-      fprintf(stderr, " Error: strSize(\"foo\") is not 3\n");
-      isOk=false;
-    }
-    if (0!=strSize("\0foo")) {
-      fioPerr();
-      fprintf(stderr, " Error: strSize(\"\\0foo\") is not 0\n");
-      isOk=false;
-    }
-  }
-  {
-    // skip -> check isBigEndian
-  }
-  {
-    // bswap_u16
-    uint16_t s=0x1122;
-    if (0x2211!=bswap_u16(s)) {
-      fioPerr();
-      fprintf(stderr, " Error: bswap_u16(0x1122) is incorrect\n");
-      isOk=false;
-    }
-    if (s!=bswap_u16(bswap_u16(s))) {
-      fioPerr();
-      fprintf(stderr, " Error: bswap_u16(bswap_u16(0x1122)) is incorrect\n");
-      isOk=false;
-    }
-    if (0!=bswap_u16(0)) {
-      fioPerr();
-      fprintf(stderr, " Error: bswap_u16(0) is incorrect\n");
-      isOk=false;
-    }
-  }
-  {
-    // bswap_u32
-    uint32_t s=0x11223344;
-    if (0x44332211!=bswap_u32(s)) {
-      fioPerr();
-      fprintf(stderr, " Error: bswap_u32(0x11223344) is incorrect\n");
-      isOk=false;
-    }
-    if (0!=bswap_u32(0)) {
-      fioPerr();
-      fprintf(stderr, " Error: bswap_u32(0) is incorrect\n");
-      isOk=false;
-    }
-  }
-  {
-    // bswap_u64
-  }
-  {
-    // open file that does not exist in read mode
-    const char *fname="fiotst.dat";
-    if (fileExists(fname)) {
-      fioPerr();
-      fprintf(stderr, " Error: fileExists(\"%s\") file exists on start\n", fname);
-      isOk=false;
-    } else {
-      FILE *fp=fileOpen(fname, "rb");
-      if (fp) {
-        fioPerr();
-        fprintf(stderr, " Error: fileOpen(\"%s\") falsely succeeded\n", fname);
-        isOk=false;
-      }
-      // check existance
-      if (fileExists(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileExists(\"%s\") falsely succeeded\n", fname);
-        isOk=false;
-      }
-      time_t rawtime;
-      time(&rawtime);
-      // open file that does not exist in write mode
-      fp=fileOpen(fname, "wb");
-      if (!fp) {
-        fioPerr();
-        fprintf(stderr, " Error: fileOpen(\"%s\") failed\n", fname);
-        isOk=false;
-      }
-      fileClose(fp);
-      // check existance
-      if (!fileExists(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileExists(\"%s\") failed\n", fname);
-        isOk=false;
-      }
-      // file readable
-      if (!fileReadable(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileReadable(\"%s\") failed\n", fname);
-        isOk=false;
-      }
-      // file type (0=normal file)
-      if (0!=fileType(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileType(\"%s\") is wrong\n", fname);
-        isOk=false;
-      }
-      // check file size
-      if (0!=fileSize(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileSize(\"%s\") is not 0\n", fname);
-        isOk=false;
-      }
-      // check modification time
-      time_t mtime=fileModificationTime(fname);
-      if (mtime==0) {
-        fioPerr();
-        fprintf(stderr, " Error: fileModificationTime(\"%s\") failed\n", fname);
-        isOk=false;
-      }
-      time_t tdiff=abs(mtime-rawtime);
-      if (tdiff!=0) {
-        fioPerr();
-        fprintf(stderr, " Error: fileModificationTime(\"%s\") is inaccurate\n"
-                , fname);
-        isOk=false;
-      }
-      // delete file
-      if (!fileDelete(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileDelete(\"%s\") failed\n", fname);
-        isOk=false;
-      }
-      // check existance
-      if (fileExists(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileExists(\"%s\") file exists after delete\n"
-                , fname);
-        isOk=false;
-      }
-      // null string into fileExists
-      if (fileExists(0)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileExists(0) null string file exists\n");
-        isOk=false;
-      }
-      // check file type from deleted file
-      if (-1!=fileType(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileType(\"%s\") is not -1 (file does not exist)\n"
-                , fname);
-        isOk=false;
-      }
-      // check file type from null string
-      if (-1!=fileType(0)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileType(0) is not -1\n");
-        isOk=false;
-      }
-      // check file type from empty string
-      if (-1!=fileType("")) {
-        fioPerr();
-        fprintf(stderr, " Error: fileType("") is not -1\n");
-        isOk=false;
-      }
-      // file close from 0
-      if (EOF!=fileClose(0)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileClose(0) is not EOF\n");
-        isOk=false;
-      }
-      // reopen file fname in write mode
-      fp=fileOpen(fname, "wb");
-      if (!fp) {
-        fioPerr();
-        fprintf(stderr, " Error: fileOpen(\"%s\") reopen failed\n", fname);
-        isOk=false;
-      }
-      uint16_t u16_val=0x2030;
-      // write little endian uint16_t
-      if (!fwrite_u16(fp, ENDIAN_LITTLE, u16_val)) {
-        fioPerr();
-        fprintf(stderr, " Error: fwrite_u16 ENDIAN_LITTLE failed\n");
-        isOk=false;
-      }
-      // write big endian uint16_t
-      if (!fwrite_u16(fp, ENDIAN_BIG, u16_val)) {
-        fioPerr();
-        fprintf(stderr, " Error: fwrite_u16 ENDIAN_BIG failed\n");
-        isOk=false;
-
-      }
-      fileClose(fp);
-      // check file size
-      if (4!=fileSize(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileSize(\"%s\") is not 4\n", fname);
-        isOk=false;
-      }
-      // open for read
-      fp=fileOpen(fname, "rb");
-      if (!fp) {
-        fioPerr();
-        fprintf(stderr, " Error: fileOpen(\"%s\") reopen for read failed\n", fname);
-        isOk=false;
-      }
-      uint16_t val=0;
-      if (!fread_u16(fp, ENDIAN_LITTLE, val)) {
-        fioPerr();
-        fprintf(stderr, " Error: fread_u16 ENDIAN_LITTLE failed\n");
-        isOk=false;
-      }
-      if (val!=u16_val) {
-        fioPerr();
-        fprintf(stderr, " Error: fread_u16 ENDIAN_LITTLE wrong value\n");
-        isOk=false;
-      }
-      if (!fread_u16(fp, ENDIAN_LITTLE, val)) {
-        fioPerr();
-        fprintf(stderr, " Error: fread_u16 next ENDIAN_LITTLE failed\n");
-        isOk=false;
-      }
-      if (bswap_u16(val)!=u16_val) {
-        fioPerr();
-        fprintf(stderr, " Error: fread_u16 next ENDIAN_LITTLE wrong value\n");
-        isOk=false;
-      }
-      rewind(fp);
-      uint32_t val2=0;
-      if (!fread_u32(fp, ENDIAN_LITTLE, val2)){
-        fioPerr();
-        fprintf(stderr, " Error: fread_u32 ENDIAN_LITTLE failed\n");
-        isOk=false;
-      }
-      if (val2!=0x30202030) {
-        fioPerr();
-        fprintf(stderr, " Error: fread_u32 ENDIAN_LITTLE is wrong\n");
-        isOk=false;
-      }
-      fileClose(fp);
-      // delete file
-      if (!fileDelete(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileDelete(\"%s\") failed (delete second time)\n"
-                , fname);
-        isOk=false;
-      }
-      // open for read
-      fp=fileOpen(fname, "wb");
-      if (!fp) {
-        fioPerr();
-        fprintf(stderr, " Error: fileOpen(\"%s\") reopen (2) for write failed\n"
-                , fname);
-        isOk=false;
-      }
-      std::vector<uint8_t> vbuf;
-      for (size_t i=0; i<16; i++) {
-        vbuf.push_back(i);
-      }
-      if (!fileSaveBytes(fp, vbuf)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileSaveBytes failed\n");
-        isOk=false;
-      }
-      fileClose(fp);
-      // check file size
-      if (16!=fileSize(fname)) {
-        fioPerr();
-        fprintf(stderr, " Error: fileSize(\"%s\") is not 16\n", fname);
-        isOk=false;
-      }
-      fp=fileOpen(fname, "rb");
-      if (fp) {
-        uint64_t val3=0;
-        if (!fread_u64(fp, ENDIAN_LITTLE, val3)) {
-          fioPerr();
-          fprintf(stderr, " Error: fread_u64 ENDIAN_LITTLE is wrong\n");
-          isOk=false;
-        }
-        if (val3!=0x0706050403020100) {
-          fioPerr();
-          fprintf(stderr, " Error: fread_u64 ENDIAN_LITTLE is wrong\n");
-          isOk=false;
-        }
-        rewind(fp);
-        if (!fread_u64(fp, ENDIAN_BIG, val3)) {
-          fioPerr();
-          fprintf(stderr, " Error: fread_u64 ENDIAN_BIG is wrong\n");
-          isOk=false;
-        }
-        if (val3!=0x0001020304050607) {
-          fioPerr();
-          fprintf(stderr, " Error: fread_u64 ENDIAN_BIG is wrong\n");
-          isOk=false;
-        }
-        rewind(fp);
-        vbuf.clear();
-        vbuf = fileLoadBytes(fp);
-        if (16!=vbuf.size()) {
-          fioPerr();
-          fprintf(stderr, " Error: fileLoadBytes has too few bytes\n");
-          isOk=false;
-        }
-        /* fioPerr(); */
-        /* fprintf(stderr, " Error: fileSaveBytes failed\n"); */
-        /* isOk=false; */
-        fclose(fp);
-        fp=fileOpen(fname, "rb");
-        if (fp) {
-          // read 4 bytes
-          vbuf.clear();
-          vbuf = fileLoadBytes(fp, 4);
-          if (4!=vbuf.size()) {
-            fioPerr();
-            fprintf(stderr, " Error: fileLoadBytes has wrong size (not 4)\n");
-            isOk=false;
-          }
-          if (vbuf[0]!=0 || vbuf[1]!=1 || vbuf[2]!=2 || vbuf[3]!=3) {
-            fioPerr();
-            fprintf(stderr, " Error: fileLoadBytes result has wrong values\n");
-            isOk=false;
-          }
-          // read 4 bytes again
-          vbuf.clear();
-          vbuf = fileLoadBytes(fp, 4);
-          if (4!=vbuf.size()) {
-            fioPerr();
-            fprintf(stderr, " Error: fileLoadBytes has wrong size (not 4)\n");
-            isOk=false;
-          }
-          if (vbuf[0]!=4 || vbuf[1]!=5 || vbuf[2]!=6 || vbuf[3]!=7) {
-            fioPerr();
-            fprintf(stderr, " Error: fileLoadBytes result has wrong values\n");
-            isOk=false;
-          }
-          fclose(fp);
-        }
-      }
-
-      fileDelete(fname);
-    }
-  }
-  return isOk;
 }
-// SELFTEST
-#endif
 
-// HEADER
 #endif
 // EOF
