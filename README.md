@@ -1,6 +1,6 @@
 # About
 
-fio.h V1.6 (03.09.2026) Public Domain (PD)
+fio.h V1.7 (024.09.2026) Public Domain (PD)
 
 Portable file functions for basic input and output (Linux and Windows)
 fio is a small library for basic file operations.
