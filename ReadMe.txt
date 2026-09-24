@@ -3,7 +3,7 @@
 ==========================================
 
 Overview:
- fio.h V1.6 (03.09.2026)
+ fio.h V1.7 (024.09.2026)
  Copyright (C) 2026 Michael Sobol info@murlock.de - Public Domain (PD)
 
  Portable file functions for basic input and output (Linux and Windows)
@@ -50,13 +50,17 @@ Passed tests:
  Devuan GNU/Linux 3 (beowulf) -> 22.05.2023
  Windows 10 Pro               -> 22.05.2023
  Windows 11 Pro               -> 03.09.2026
+ Devuan GNU/Linux 6 (excalibur) -> 24.09.2026
 
 Compatible compilers:
  g++ 8.3.0
  TDM-GCC 9.2.0
  TDM-GCC 10.3.0
+ g++ 14.2.0
 
 Version history:
+ V1.7 (24.09.2026):
+  memcpy was missing in Linux systems.
  V1.6 (03.09.2026):
   Return value was wrong in fread_bytes.
   The self-test was outsourced into fiotest.cpp.
@@ -86,8 +90,8 @@ Short Manual:
 
 Definitions:
  FIO_VER     = 1      -> Version number
- FIO_REV     = 6      -> Revision number
- FIO_VERSTR  = "1.6"  -> Version string
+ FIO_REV     = 7      -> Revision number
+ FIO_VERSTR  = "1.7"  -> Version string
 
  FIO_PATH_SEPARATOR -> System specific path seperator
  FIO_EOL            -> System specific line ending sequence
