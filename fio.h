@@ -1,9 +1,9 @@
-// $VER: fio.h V1.6 (03.09.2026)
+// $VER: fio.h V1.7 (24.09.2026)
 // Copyright (C) 2026 Michael Sobol info@murlock.de
 // Public Domain (PD)
 //
 // Overview:
-//  fio.h V1.6 (03.09.2026)
+//  fio.h V1.7 (24.09.2026)
 //  Copyright (C) 2026 Michael Sobol info@murlock.de - Public Domain (PD)
 //
 //  Portable file functions for basic input and output (Linux and Windows)
@@ -46,17 +46,21 @@
 //  For more information, please refer to <http://unlicense.org>
 //
 // Passed tests:
-//  openSUSE Leap 15.2           -> 22.05.2023
-//  Devuan GNU/Linux 3 (beowulf) -> 22.05.2023
-//  Windows 10 Pro               -> 22.05.2023
-//  Windows 11 Pro               -> 03.09.2026
+//  openSUSE Leap 15.2             -> 22.05.2023
+//  Devuan GNU/Linux 3 (beowulf)   -> 22.05.2023
+//  Windows 10 Pro                 -> 22.05.2023
+//  Windows 11 Pro                 -> 03.09.2026
+//  Devuan GNU/Linux 6 (excalibur) -> 24.09.2026
 //
 // Compatible compilers:
 //  g++ 8.3.0
 //  TDM-GCC 9.2.0
 //  TDM-GCC 10.3.0
+//  g++ 14.2.0
 //
 // Version history:
+//  V1.7 (03.09.2026):
+//   memcpy was missing in Linux systems.
 //  V1.6 (03.09.2026):
 //   Return value was wrong in fread_bytes.
 //   The self-test was outsourced into fiotest.cpp.
@@ -100,6 +104,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <string.h>
 
 typedef struct stat64 ststat64;
 
