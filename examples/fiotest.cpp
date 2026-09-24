@@ -64,7 +64,7 @@ bool fioSelftest() {
       isOk = false;
     }
     const size_t SS=4;
-    const char se[SS] = "1.6"; // expected value
+    const char se[SS] = "1.7"; // expected value
     const char sv[SS] = FIO_VERSTR; // real value
     for (size_t i = 0; i < SS; i++) {
       if (sv[i] != se[i]) {
