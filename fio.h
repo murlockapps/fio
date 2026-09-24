@@ -89,8 +89,8 @@
 
 // Library version information
 #define FIO_VER 1
-#define FIO_REV 6
-#define FIO_VERSTR "1.6"
+#define FIO_REV 7
+#define FIO_VERSTR "1.7"
 
 #include <stdio.h>
 #include <stdlib.h>
